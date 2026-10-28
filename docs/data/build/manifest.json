@@ -1,0 +1,584 @@
+{
+ "built_utc": "2026-10-28T08:44:46Z",
+ "generator": "scripts/build_site.py",
+ "site": {
+  "title": "POSSIM-Web · 珠江口风暴潮淹没推演平台",
+  "region": "珠江口-伶仃洋",
+  "bbox": [
+   113.2,
+   22.2,
+   114.2,
+   23.0
+  ],
+  "grid": [
+   1188,
+   864
+  ],
+  "pixel_m": 94.3,
+  "hours": 36,
+  "frames": 37
+ },
+ "typhoons": [
+  {
+   "tid": "mangkhut",
+   "name": "山竹",
+   "name_en": "Mangkhut",
+   "year": 2018
+  },
+  {
+   "tid": "saola",
+   "name": "苏拉",
+   "name_en": "Saola",
+   "year": 2023
+  },
+  {
+   "tid": "hato",
+   "name": "天鸽",
+   "name_en": "Hato",
+   "year": 2017
+  }
+ ],
+ "kernels": [
+  {
+   "id": "numpy",
+   "label": "numpy 复算"
+  },
+  {
+   "id": "fortran",
+   "label": "原 Fortran 内核"
+  }
+ ],
+ "cases": [
+  {
+   "tid": "mangkhut",
+   "kernel": "numpy",
+   "amp": "3.8",
+   "dir": "data/build/mangkhut/numpy_3.8/",
+   "frames": 37,
+   "elapsed_ms": 4481,
+   "peak": {
+    "surge_m": 1.664,
+    "surge_at": "Hour +024",
+    "area_ha": 20845.8,
+    "area_at": "Hour +020",
+    "depth_m": 1.835,
+    "villages": 11,
+    "pop": 250200
+   },
+   "summary": {
+    "max_depth": {
+     "value": 1.835,
+     "label": "Hour +020"
+    },
+    "max_area": {
+     "value": 20845.8,
+     "label": "Hour +020"
+    },
+    "max_surge": {
+     "value": 1.664,
+     "label": "Hour +024"
+    },
+    "affected_pop": 250200,
+    "affected_villages": 11,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "山竹",
+   "name_en": "Mangkhut",
+   "year": 2018
+  },
+  {
+   "tid": "mangkhut",
+   "kernel": "numpy",
+   "amp": "1.0",
+   "dir": "data/build/mangkhut/numpy_1.0/",
+   "frames": 37,
+   "elapsed_ms": 4357,
+   "peak": {
+    "surge_m": 0.438,
+    "surge_at": "Hour +024",
+    "area_ha": 8930.7,
+    "area_at": "Hour +022",
+    "depth_m": 1.329,
+    "villages": 8,
+    "pop": 160200
+   },
+   "summary": {
+    "max_depth": {
+     "value": 1.329,
+     "label": "Hour +020"
+    },
+    "max_area": {
+     "value": 8930.7,
+     "label": "Hour +022"
+    },
+    "max_surge": {
+     "value": 0.438,
+     "label": "Hour +024"
+    },
+    "affected_pop": 160200,
+    "affected_villages": 8,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "山竹",
+   "name_en": "Mangkhut",
+   "year": 2018
+  },
+  {
+   "tid": "mangkhut",
+   "kernel": "fortran",
+   "amp": "3.8",
+   "dir": "data/build/mangkhut/fortran_3.8/",
+   "frames": 37,
+   "elapsed_ms": 7026,
+   "peak": {
+    "surge_m": 1.178,
+    "surge_at": "Hour +025",
+    "area_ha": 14758.0,
+    "area_at": "Hour +021",
+    "depth_m": 1.466,
+    "villages": 11,
+    "pop": 250200
+   },
+   "summary": {
+    "max_depth": {
+     "value": 1.466,
+     "label": "Hour +020"
+    },
+    "max_area": {
+     "value": 14758.0,
+     "label": "Hour +021"
+    },
+    "max_surge": {
+     "value": 1.178,
+     "label": "Hour +025"
+    },
+    "affected_pop": 250200,
+    "affected_villages": 11,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "山竹",
+   "name_en": "Mangkhut",
+   "year": 2018
+  },
+  {
+   "tid": "mangkhut",
+   "kernel": "fortran",
+   "amp": "1.0",
+   "dir": "data/build/mangkhut/fortran_1.0/",
+   "frames": 37,
+   "elapsed_ms": 6816,
+   "peak": {
+    "surge_m": 0.31,
+    "surge_at": "Hour +025",
+    "area_ha": 477.5,
+    "area_at": "Hour +023",
+    "depth_m": 0.288,
+    "villages": 1,
+    "pop": 22000
+   },
+   "summary": {
+    "max_depth": {
+     "value": 0.288,
+     "label": "Hour +023"
+    },
+    "max_area": {
+     "value": 477.5,
+     "label": "Hour +023"
+    },
+    "max_surge": {
+     "value": 0.31,
+     "label": "Hour +025"
+    },
+    "affected_pop": 22000,
+    "affected_villages": 1,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "山竹",
+   "name_en": "Mangkhut",
+   "year": 2018
+  },
+  {
+   "tid": "saola",
+   "kernel": "numpy",
+   "amp": "3.8",
+   "dir": "data/build/saola/numpy_3.8/",
+   "frames": 37,
+   "elapsed_ms": 5262,
+   "peak": {
+    "surge_m": 2.244,
+    "surge_at": "Hour +022",
+    "area_ha": 58826.5,
+    "area_at": "Hour +004",
+    "depth_m": 3.138,
+    "villages": 13,
+    "pop": 269000
+   },
+   "summary": {
+    "max_depth": {
+     "value": 3.138,
+     "label": "Hour +016"
+    },
+    "max_area": {
+     "value": 58826.5,
+     "label": "Hour +004"
+    },
+    "max_surge": {
+     "value": 2.244,
+     "label": "Hour +022"
+    },
+    "affected_pop": 269000,
+    "affected_villages": 13,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "苏拉",
+   "name_en": "Saola",
+   "year": 2023
+  },
+  {
+   "tid": "saola",
+   "kernel": "numpy",
+   "amp": "1.0",
+   "dir": "data/build/saola/numpy_1.0/",
+   "frames": 37,
+   "elapsed_ms": 4361,
+   "peak": {
+    "surge_m": 0.591,
+    "surge_at": "Hour +022",
+    "area_ha": 18271.4,
+    "area_at": "Hour +016",
+    "depth_m": 1.914,
+    "villages": 11,
+    "pop": 250200
+   },
+   "summary": {
+    "max_depth": {
+     "value": 1.914,
+     "label": "Hour +004"
+    },
+    "max_area": {
+     "value": 18271.4,
+     "label": "Hour +016"
+    },
+    "max_surge": {
+     "value": 0.591,
+     "label": "Hour +022"
+    },
+    "affected_pop": 250200,
+    "affected_villages": 11,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "苏拉",
+   "name_en": "Saola",
+   "year": 2023
+  },
+  {
+   "tid": "saola",
+   "kernel": "fortran",
+   "amp": "3.8",
+   "dir": "data/build/saola/fortran_3.8/",
+   "frames": 37,
+   "elapsed_ms": 7713,
+   "peak": {
+    "surge_m": 2.351,
+    "surge_at": "Hour +022",
+    "area_ha": 33137.0,
+    "area_at": "Hour +004",
+    "depth_m": 2.625,
+    "villages": 11,
+    "pop": 250200
+   },
+   "summary": {
+    "max_depth": {
+     "value": 2.625,
+     "label": "Hour +016"
+    },
+    "max_area": {
+     "value": 33137.0,
+     "label": "Hour +004"
+    },
+    "max_surge": {
+     "value": 2.351,
+     "label": "Hour +022"
+    },
+    "affected_pop": 250200,
+    "affected_villages": 11,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "苏拉",
+   "name_en": "Saola",
+   "year": 2023
+  },
+  {
+   "tid": "saola",
+   "kernel": "fortran",
+   "amp": "1.0",
+   "dir": "data/build/saola/fortran_1.0/",
+   "frames": 37,
+   "elapsed_ms": 7098,
+   "peak": {
+    "surge_m": 0.619,
+    "surge_at": "Hour +022",
+    "area_ha": 13272.0,
+    "area_at": "Hour +016",
+    "depth_m": 1.494,
+    "villages": 9,
+    "pop": 211200
+   },
+   "summary": {
+    "max_depth": {
+     "value": 1.494,
+     "label": "Hour +016"
+    },
+    "max_area": {
+     "value": 13272.0,
+     "label": "Hour +016"
+    },
+    "max_surge": {
+     "value": 0.619,
+     "label": "Hour +022"
+    },
+    "affected_pop": 211200,
+    "affected_villages": 9,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "苏拉",
+   "name_en": "Saola",
+   "year": 2023
+  },
+  {
+   "tid": "hato",
+   "kernel": "numpy",
+   "amp": "3.8",
+   "dir": "data/build/hato/numpy_3.8/",
+   "frames": 37,
+   "elapsed_ms": 4443,
+   "peak": {
+    "surge_m": 1.794,
+    "surge_at": "Hour +023",
+    "area_ha": 71426.3,
+    "area_at": "Hour +020",
+    "depth_m": 2.691,
+    "villages": 13,
+    "pop": 269000
+   },
+   "summary": {
+    "max_depth": {
+     "value": 2.691,
+     "label": "Hour +020"
+    },
+    "max_area": {
+     "value": 71426.3,
+     "label": "Hour +020"
+    },
+    "max_surge": {
+     "value": 1.794,
+     "label": "Hour +023"
+    },
+    "affected_pop": 269000,
+    "affected_villages": 13,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "天鸽",
+   "name_en": "Hato",
+   "year": 2017
+  },
+  {
+   "tid": "hato",
+   "kernel": "numpy",
+   "amp": "1.0",
+   "dir": "data/build/hato/numpy_1.0/",
+   "frames": 37,
+   "elapsed_ms": 4017,
+   "peak": {
+    "surge_m": 0.472,
+    "surge_at": "Hour +023",
+    "area_ha": 16427.1,
+    "area_at": "Hour +021",
+    "depth_m": 1.923,
+    "villages": 11,
+    "pop": 250200
+   },
+   "summary": {
+    "max_depth": {
+     "value": 1.923,
+     "label": "Hour +020"
+    },
+    "max_area": {
+     "value": 16427.1,
+     "label": "Hour +021"
+    },
+    "max_surge": {
+     "value": 0.472,
+     "label": "Hour +023"
+    },
+    "affected_pop": 250200,
+    "affected_villages": 11,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "天鸽",
+   "name_en": "Hato",
+   "year": 2017
+  },
+  {
+   "tid": "hato",
+   "kernel": "fortran",
+   "amp": "3.8",
+   "dir": "data/build/hato/fortran_3.8/",
+   "frames": 37,
+   "elapsed_ms": 6762,
+   "peak": {
+    "surge_m": 1.517,
+    "surge_at": "Hour +024",
+    "area_ha": 45804.3,
+    "area_at": "Hour +020",
+    "depth_m": 2.166,
+    "villages": 12,
+    "pop": 257000
+   },
+   "summary": {
+    "max_depth": {
+     "value": 2.166,
+     "label": "Hour +020"
+    },
+    "max_area": {
+     "value": 45804.3,
+     "label": "Hour +020"
+    },
+    "max_surge": {
+     "value": 1.517,
+     "label": "Hour +024"
+    },
+    "affected_pop": 257000,
+    "affected_villages": 12,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "天鸽",
+   "name_en": "Hato",
+   "year": 2017
+  },
+  {
+   "tid": "hato",
+   "kernel": "fortran",
+   "amp": "1.0",
+   "dir": "data/build/hato/fortran_1.0/",
+   "frames": 37,
+   "elapsed_ms": 6609,
+   "peak": {
+    "surge_m": 0.399,
+    "surge_at": "Hour +024",
+    "area_ha": 942.6,
+    "area_at": "Hour +023",
+    "depth_m": 1.577,
+    "villages": 3,
+    "pop": 80000
+   },
+   "summary": {
+    "max_depth": {
+     "value": 1.577,
+     "label": "Hour +021"
+    },
+    "max_area": {
+     "value": 942.6,
+     "label": "Hour +023"
+    },
+    "max_surge": {
+     "value": 0.399,
+     "label": "Hour +024"
+    },
+    "affected_pop": 80000,
+    "affected_villages": 3,
+    "affected_note": "按村点最近像素在本时段内的最大淹没水深 > 0.10 m 判定受影响，人口取 villages.pop 之和（估算，非承灾体普查）"
+   },
+   "name": "天鸽",
+   "name_en": "Hato",
+   "year": 2017
+  }
+ ],
+ "sensitivity": {
+  "typhoon": "mangkhut",
+  "kernel": "numpy",
+  "amp": "3.8",
+  "note": "Vmax 覆盖整条路径点；其余参数取 meta.defaults",
+  "rows": [
+   {
+    "vmax_kt": 75,
+    "surge_m": 1.329,
+    "area_ha": 19561.7,
+    "twl_m": 1.473,
+    "pop": 250200,
+    "villages": 11
+   },
+   {
+    "vmax_kt": 90,
+    "surge_m": 1.473,
+    "area_ha": 20474.1,
+    "twl_m": 1.564,
+    "pop": 250200,
+    "villages": 11
+   },
+   {
+    "vmax_kt": 105,
+    "surge_m": 1.634,
+    "area_ha": 21192.6,
+    "twl_m": 1.656,
+    "pop": 250200,
+    "villages": 11
+   },
+   {
+    "vmax_kt": 120,
+    "surge_m": 1.808,
+    "area_ha": 22153.0,
+    "twl_m": 1.76,
+    "pop": 250200,
+    "villages": 11
+   },
+   {
+    "vmax_kt": 135,
+    "surge_m": 1.988,
+    "area_ha": 23420.2,
+    "twl_m": 1.874,
+    "pop": 250200,
+    "villages": 11
+   },
+   {
+    "vmax_kt": 150,
+    "surge_m": 2.173,
+    "area_ha": 27036.7,
+    "twl_m": 2.012,
+    "pop": 250200,
+    "villages": 11
+   },
+   {
+    "vmax_kt": 165,
+    "surge_m": 2.357,
+    "area_ha": 34484.2,
+    "twl_m": 2.159,
+    "pop": 250200,
+    "villages": 11
+   }
+  ]
+ },
+ "gallery": [
+  {
+   "file": "assets/hero-shot.webp",
+   "caption": "山竹 +020h 淹没范围（numpy 内核）",
+   "hero": true
+  },
+  {
+   "file": "assets/shot-numpy-clean.webp",
+   "caption": "山竹 · +020h · numpy 内核 · 3.8 档"
+  },
+  {
+   "file": "assets/shot-fortran-clean.webp",
+   "caption": "天鸽 · +021h · 原 Fortran 内核 · 3.8 档"
+  },
+  {
+   "file": "assets/shot-wind.webp",
+   "caption": "粒子风场图层（山竹 +024h，6000 粒子）"
+  },
+  {
+   "file": "assets/shot-1280.webp",
+   "caption": "1280×720 下的自适应布局"
+  }
+ ]
+}

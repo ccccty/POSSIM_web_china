@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 运行时产物
+*.log
+logs/
+tmp/
+_site/
+.build_cache/
+
+# 原厂内核（版权原因不入库；本地需要时自行放入并设置 POSSIM_DLL）
+storm_surge_physics.dll
+01-POSSIM3.0-原工程/

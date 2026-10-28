@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#04101f">
+<meta name="description" content="POSSIM-Web：珠江口风暴潮淹没推演大屏（1188×864 栅格、36 小时、37 帧、原 Fortran 内核直连）。静态演示版。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23061a2e'/%3E%3Cpath d='M6 20c3-6 6 2 9-3s5 1 9-4' stroke='%2335e0ff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="robots" content="index,follow">
+<title>珠江口风暴潮淹没推演平台 · POSSIM</title>
+<!-- 第三方库走 CDN（零构建，契约 §7.4） -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<!-- 本地样式 -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="viewport">
+  <div id="stage">
+
+    <!-- 背景层：径向渐变 + 网格 + 扫描线 + 光带 -->
+    <div class="stage-bg"></div>
+    <div class="stage-grid"></div>
+    <div class="stage-scan"></div>
+    <div class="stage-sweep"></div>
+
+    <!-- ============ 顶栏 ============ -->
+    <header class="topbar">
+        <a class="home-link" href="index.html" title="返回项目介绍"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>项目主页</a>
+      <div class="seg" id="seg-left">
+        <button type="button" class="active" data-act="run">推演</button>
+        <button type="button" data-act="params">参数</button>
+        <button type="button" data-act="impact">影响</button>
+        <button type="button" data-act="report">报告</button>
+      </div>
+
+      <div class="title-wrap">
+        <div class="title-line top"></div>
+        <h1>珠江口风暴潮淹没推演平台</h1>
+        <p class="sub">POSSIM · 风暴潮淹没推演</p>
+        <div class="title-line bottom"></div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="seg" id="seg-right">
+          <button type="button" data-act="layer" id="btn-layer" aria-haspopup="true" aria-controls="layer-pop">图层</button>
+          <button type="button" data-act="compare">对比</button>
+          <button type="button" data-act="export">导出</button>
+          <button type="button" data-act="about">关于</button>
+        </div>
+
+        <!-- 「图层」弹层：台风风场总开关 + 粒子/箭头单选（契约 §10.3） -->
+        <div class="layer-pop" id="layer-pop" role="dialog" aria-label="图层控制" aria-hidden="true">
+          <div class="lp-t"><i></i>图层控制</div>
+          <div class="lp-row">
+            <span class="lp-k">台风风场</span>
+            <button type="button" class="lp-switch on" id="lp-wind" role="switch" aria-checked="true" title="开启/关闭台风风场图层（关闭后停止动画并清空画布）"><b></b></button>
+          </div>
+          <div class="lp-sub">风场形态</div>
+          <div class="lp-row lp-radios">
+            <label class="lp-radio"><input type="radio" name="lp-wind-mode" value="particle" checked><span>粒子流动</span></label>
+            <label class="lp-radio"><input type="radio" name="lp-wind-mode" value="arrow"><span>箭头网格</span></label>
+          </div>
+          <div class="lp-sub">风场强度</div>
+          <div class="lp-row lp-radios lp-radios-3">
+            <label class="lp-radio"><input type="radio" name="lp-wind-int" value="light"><span>淡</span></label>
+            <label class="lp-radio"><input type="radio" name="lp-wind-int" value="mid" checked><span>中</span></label>
+            <label class="lp-radio"><input type="radio" name="lp-wind-int" value="strong"><span>浓</span></label>
+          </div>
+          <div class="lp-hint">风速配色见地图右下「风速 (m/s)」色带；粒子速度 ∝ 风速；强度只改笔迹浓淡（默认「中」）</div>
+          <div class="lp-row lp-foot">
+            <button type="button" class="chip" id="lp-base" title="在 影像 / 矢量 / 地形 / 纯色 之间轮换底图">切换底图</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ============ 主区 ============ -->
+    <div class="layout">
+
+      <!-- ---------- 左列 ---------- -->
+      <aside class="col-left">
+
+        <!-- 卡 1：台风态势 -->
+        <section class="card" style="flex:0 0 244px;">
+          <div class="card-in">
+            <div class="card-head">
+              <i class="bar"></i>
+              <h2>台风态势</h2>
+              <span class="head-extra">
+                <select id="typhoon-select" class="ty-select" title="选择台风样例"></select>
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="ty-list">
+                <div class="ty-row">
+                  <span class="ty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6h6a4 4 0 1 1 0 8H8"/><path d="M18 18h-6a4 4 0 1 1 0-8"/></svg></span>
+                  <span class="ty-k">编号</span><span class="ty-v hi" id="ty-id">--</span>
+                </div>
+                <div class="ty-row">
+                  <span class="ty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span>
+                  <span class="ty-k">命名</span><span class="ty-v" id="ty-name">--</span>
+                </div>
+                <div class="ty-row">
+                  <span class="ty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l2.6 6.2 6.4.5-4.9 4.2 1.5 6.3L12 16.9 6.4 20.2l1.5-6.3L3 9.7l6.4-.5z"/></svg></span>
+                  <span class="ty-k">强度等级</span><span class="ty-v warn" id="ty-level">--</span>
+                </div>
+                <div class="ty-row">
+                  <span class="ty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 20a8 8 0 1 0-8-8"/><path d="M12 12l4-4"/><path d="M4 12H2"/></svg></span>
+                  <span class="ty-k">中心气压</span><span class="ty-v" id="ty-pc">--</span>
+                </div>
+                <div class="ty-row">
+                  <span class="ty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 14h13a3 3 0 1 1-3 3"/><path d="M3 20h6"/></svg></span>
+                  <span class="ty-k">最大风速</span><span class="ty-v hi" id="ty-vmax">--</span>
+                </div>
+                <div class="ty-row">
+                  <span class="ty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 18L18 6"/><path d="M18 6h-5M18 6v5"/><path d="M4 10h4"/></svg></span>
+                  <span class="ty-k">移速移向</span><span class="ty-v" id="ty-move">--</span>
+                </div>
+                <div class="ty-row">
+                  <span class="ty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" stroke-dasharray="2.5 3"/><circle cx="12" cy="12" r="2.6"/></svg></span>
+                  <span class="ty-k">七级风圈</span><span class="ty-v" id="ty-r34">--</span>
+                </div>
+                <div class="ty-row">
+                  <span class="ty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4l8 15H4z"/><path d="M12 10v4M12 16.4v.6"/></svg></span>
+                  <span class="ty-k">预警级别</span><span class="ty-v danger" id="ty-alert">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 卡 2：目标海域 -->
+        <section class="card" style="flex:0 0 172px;">
+          <div class="card-in">
+            <div class="card-head">
+              <i class="bar"></i><h2>目标海域</h2>
+              <span class="head-extra" style="font-size:10.5px;color:#7ba7c9;" id="sea-region">--</span>
+            </div>
+            <div class="card-body">
+              <div class="sea-wrap">
+                <div class="sea-stats">
+                  <div class="sea-item"><span class="k">推演面积</span><span class="v nums" id="sea-area">--<small>km²</small></span></div>
+                  <div class="sea-item"><span class="k">平均高程</span><span class="v nums" id="sea-elev">--<small>m</small></span></div>
+                  <div class="sea-item"><span class="k">DEM 分辨率</span><span class="v nums" id="sea-res">--<small>m</small></span></div>
+                </div>
+                <div class="sea-thumb">
+                  <img id="sea-thumb-img" alt="地形缩略图">
+                  <span class="tag">DEM 晕渲</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 卡 3：影响行政村 -->
+        <section class="card" style="flex:1 1 auto;">
+          <div class="card-in">
+            <div class="card-head">
+              <i class="bar"></i><h2>影响行政村</h2>
+              <span class="head-extra" style="font-size:10.5px;color:#7ba7c9;" id="v-stamp">按当前帧水深排序</span>
+            </div>
+            <div class="card-body" style="padding:6px 12px 0;">
+              <div class="v-head">
+                <span>村名</span><span>人口</span><span>户数</span><span>距岸</span><span>水深</span><span>等级</span>
+              </div>
+              <div class="v-body" id="v-body"></div>
+            </div>
+            <div class="v-foot" style="padding:0 12px 7px;">
+              <span id="v-count">受影响 -- 个村</span>
+              <span>影响人口 <b id="v-pop">--</b> 人</span>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- ---------- 中列 ---------- -->
+      <main class="col-center">
+        <div class="mapwrap">
+          <div id="map"></div>
+
+          <!-- 地图装饰角 -->
+          <span class="map-corner tl"><svg viewBox="0 0 26 26" fill="none" stroke="#35e0ff" stroke-width="1.4"><path d="M1 9V1h8"/></svg></span>
+          <span class="map-corner tr"><svg viewBox="0 0 26 26" fill="none" stroke="#35e0ff" stroke-width="1.4"><path d="M1 9V1h8"/></svg></span>
+          <span class="map-corner br"><svg viewBox="0 0 26 26" fill="none" stroke="#35e0ff" stroke-width="1.4"><path d="M1 9V1h8"/></svg></span>
+          <span class="map-corner bl"><svg viewBox="0 0 26 26" fill="none" stroke="#35e0ff" stroke-width="1.4"><path d="M1 9V1h8"/></svg></span>
+
+          <div class="map-caption">珠江口-伶仃洋 · <b>EPSG:4326</b> · <span id="map-caption-frame">Hour +000</span></div>
+
+          <!-- 右上 4 个指标块 -->
+          <div class="ind-row">
+            <div class="ind" id="ind-surge">
+              <span class="ring">
+                <svg viewBox="0 0 38 38"><circle class="rc" cx="19" cy="19" r="16"></circle><circle class="rv" id="ind-surge-r" cx="19" cy="19" r="16" stroke-dasharray="0 101"></circle></svg>
+              </span>
+              <span class="txt"><span class="k">最大增水</span><span class="v nums" id="ind-surge-v">0.00<small>m</small></span></span>
+            </div>
+            <div class="ind" id="ind-twl">
+              <span class="ring">
+                <svg viewBox="0 0 38 38"><circle class="rc" cx="19" cy="19" r="16"></circle><circle class="rv" id="ind-twl-r" cx="19" cy="19" r="16" stroke-dasharray="0 101"></circle></svg>
+              </span>
+              <span class="txt"><span class="k">最大总水位</span><span class="v nums" id="ind-twl-v">0.00<small>m</small></span></span>
+            </div>
+            <div class="ind" id="ind-area">
+              <span class="ring">
+                <svg viewBox="0 0 38 38"><circle class="rc" cx="19" cy="19" r="16"></circle><circle class="rv" id="ind-area-r" cx="19" cy="19" r="16" stroke-dasharray="0 101"></circle></svg>
+              </span>
+              <span class="txt"><span class="k">淹没面积</span><span class="v nums" id="ind-area-v">0<small>ha</small></span></span>
+            </div>
+            <div class="ind" id="ind-pop">
+              <span class="ring">
+                <svg viewBox="0 0 38 38"><circle class="rc" cx="19" cy="19" r="16"></circle><circle class="rv" id="ind-pop-r" cx="19" cy="19" r="16" stroke-dasharray="0 101"></circle></svg>
+              </span>
+              <span class="txt"><span class="k">影响人口</span><span class="v nums" id="ind-pop-v">0<small>人</small></span></span>
+            </div>
+          </div>
+
+          <!-- 左上：底图切换（影像=ArcGIS World_Imagery（WGS84，默认，与淹没栅格对齐）；
+               矢量=高德 webrd；地形=DEM 晕渲；纯色=深色底。高德影像为 GCJ-02 加偏，只作 tileerror 兜底） -->
+          <div class="map-tools">
+            <span class="mt-label">底图</span>
+            <button type="button" class="chip" data-base="vec" title="高德矢量瓦片（webrd0x.is.autonavi.com）">矢量</button>
+            <button type="button" class="chip active" data-base="img" title="ArcGIS World_Imagery（server.arcgisonline.com，WGS84，默认；连续失败回落高德影像）">影像</button>
+            <button type="button" class="chip" data-base="dem" title="仅用 data/dem_preview.png 地形晕渲">地形</button>
+            <button type="button" class="chip" data-base="none" title="纯深色底，只看淹没与路径">纯色</button>
+            <span style="width:1px;height:14px;background:rgba(23,69,107,.9);margin:0 2px;"></span>
+            <button type="button" class="chip active" data-toggle="dem" title="DEM 预览作为范围底衬（0.22 透明度），可关闭">地形底衬</button>
+            <span style="width:1px;height:14px;background:rgba(23,69,107,.9);margin:0 2px;"></span>
+            <button type="button" class="chip" data-map="reset" title="回到全区视野">复位</button>
+          </div>
+
+          <!-- 底部中央：两个视角缩略图 -->
+          <div class="thumbs">
+            <div class="thumb active" data-view="all">
+              <span class="tk">全区边界</span>
+              <svg viewBox="0 0 152 86" preserveAspectRatio="none">
+                <rect x="0" y="0" width="152" height="86" fill="#07202f"></rect>
+                <path d="M0 30 L22 26 L44 33 L66 24 L88 31 L110 22 L132 29 L152 24" fill="none" stroke="#17456b" stroke-width="1"></path>
+                <path d="M0 58 L22 62 L44 55 L66 63 L88 56 L110 64 L132 57 L152 60" fill="none" stroke="#17456b" stroke-width="1"></path>
+                <path d="M8 40 C30 34 46 44 62 40 C78 36 92 46 108 42 C124 38 138 46 148 42"
+                      fill="none" stroke="#35e0ff" stroke-width="1.6"></path>
+                <rect x="6" y="6" width="140" height="74" fill="none" stroke="#35e0ff" stroke-width="1"
+                      stroke-dasharray="6 5" opacity="0.9"></rect>
+                <circle cx="76" cy="43" r="2.6" fill="#ff5c5c"></circle>
+              </svg>
+              <span class="ov"></span>
+            </div>
+            <div class="thumb" data-view="coast">
+              <span class="tk">重点岸段</span>
+              <svg viewBox="0 0 152 86" preserveAspectRatio="none">
+                <rect x="0" y="0" width="152" height="86" fill="#07202f"></rect>
+                <path d="M0 26 C26 20 40 36 58 34 C76 32 88 46 104 44 C120 42 134 52 152 48"
+                      fill="none" stroke="#35e0ff" stroke-width="1.8"></path>
+                <path d="M0 34 C26 28 40 44 58 42 C76 40 88 54 104 52 C120 50 134 60 152 56"
+                      fill="none" stroke="#2f81f7" stroke-width="1.2" stroke-dasharray="4 4"></path>
+                <g fill="#35e0ff" opacity="0.85">
+                  <circle cx="30" cy="38" r="2.2"></circle><circle cx="66" cy="40" r="2.2"></circle>
+                  <circle cx="100" cy="48" r="2.2"></circle><circle cx="132" cy="52" r="2.2"></circle>
+                </g>
+                <rect x="6" y="6" width="140" height="74" fill="none" stroke="#35e0ff" stroke-width="1"
+                      stroke-dasharray="6 5" opacity="0.55"></rect>
+              </svg>
+              <span class="ov"></span>
+            </div>
+          </div>
+
+          <!-- 右下：图例小卡（淹没水深分级 + 风速，两卡上下排列、8px 间距，不重叠） -->
+          <div class="legend-stack">
+            <div class="legend">
+              <div class="lg-t"><i></i>淹没水深分级（m）</div>
+              <div class="lg-scale">
+                <span style="background:#7ee8ff"></span><span style="background:#35e0ff"></span>
+                <span style="background:#2f81f7"></span><span style="background:#ffd166"></span>
+                <span style="background:#ffb020"></span><span style="background:#ff5c5c"></span>
+                <span style="background:#c026d3"></span>
+              </div>
+              <div class="lg-num"><span>0</span><span>0.33</span><span>0.5</span><span>1</span><span>2</span><span>3</span><span>5+</span></div>
+              <div class="lg-rows">
+                <div><i style="background:#ff5c5c"></i>台风中心 / 路径</div>
+                <div><i style="background:rgba(255,176,32,.5);border:1px dashed #ffb020"></i>七级风圈（R34）</div>
+                <div><i style="background:#35e0ff;border-radius:50%"></i>影响行政村</div>
+                <div><i style="background:transparent;border:1px solid #35e0ff;box-shadow:0 0 7px #35e0ff"></i>推演范围边界</div>
+              </div>
+            </div>
+
+            <!-- 风速着色带（契约 §10.3 同一色板） -->
+            <div class="legend legend-wind" id="legend-wind">
+              <div class="lg-t"><i></i>风速 (m/s)</div>
+              <div class="lg-scale lg-wscale">
+                <span style="background:#4b6b8a"></span><span style="background:#3ba0d8"></span>
+                <span style="background:#35e0ff"></span><span style="background:#27d17a"></span>
+                <span style="background:#ffb020"></span><span style="background:#ff7a45"></span>
+                <span style="background:#ff2d55"></span>
+              </div>
+              <div class="lg-num"><span>0</span><span>5</span><span>10</span><span>17</span><span>25</span><span>33</span><span>45+</span></div>
+            </div>
+          </div>
+
+          <!-- 加载遮罩 -->
+          <div class="loading-mask" id="loading">
+            <div class="loading-box">
+              <span class="spinner"></span>
+              <span class="lt" id="loading-text">正在推演 36 小时…</span>
+              <span class="ls">engine/simulate · 1188×864 逐像素</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 时间轴 -->
+        <div class="timeline">
+          <button type="button" class="tl-btn" id="btn-play" title="播放 / 暂停（2 s/帧）">
+            <svg id="ico-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="ico-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+          </button>
+          <div class="tl-info">
+            <span class="h">Hour <b id="tl-hour">+000</b> / <span id="tl-total">36</span>h</span>
+            <span class="u" id="tl-utc">--</span>
+          </div>
+          <button type="button" class="tl-btn wide" id="btn-restart" title="回到 Hour +000 并从头播放">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 6.5L5.5 12l6 5.5"/><path d="M18.5 6.5l-6 5.5 6 5.5"/></svg>
+            <span>从头播放</span>
+          </button>
+          <div class="tl-track">
+            <input type="range" class="tl-range" id="tl-range" min="0" max="0" step="1" value="0">
+          </div>
+          <div class="tl-status" id="tl-status">待推演</div>
+        </div>
+      </main>
+
+      <!-- ---------- 右列 ---------- -->
+      <aside class="col-right">
+
+        <!-- 卡 1：潮位与增水 -->
+        <section class="card" style="flex:0 0 312px;">
+          <div class="card-in">
+            <div class="card-head">
+              <i class="bar"></i><h2>潮位与增水</h2>
+              <span class="head-extra">
+                <span class="tabs" id="chart-tabs">
+                  <button type="button" class="tab on" data-series="all">全部</button>
+                  <button type="button" class="tab" data-series="tide">潮位</button>
+                  <button type="button" class="tab" data-series="surge">增水</button>
+                  <button type="button" class="tab" data-series="twl">总水位</button>
+                </span>
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="chart-box"><div id="chart-tide"></div></div>
+              <div class="chart-legend">
+                <span><i style="background:#35e0ff"></i>潮位 <b id="lg-tide">--</b></span>
+                <span><i style="background:#ffb020"></i>增水 <b id="lg-surge">--</b></span>
+                <span><i style="background:#2f81f7"></i>总水位 <b id="lg-twl">--</b></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 卡 2：风场与工况 -->
+        <section class="card" style="flex:1 1 auto;">
+          <div class="card-in">
+            <div class="card-head">
+              <i class="bar"></i><h2>风场与工况</h2>
+              <span class="head-extra" style="font-size:10.5px;color:#7ba7c9;" id="wind-stamp">--</span>
+            </div>
+            <div class="card-body">
+              <div class="wsec">
+                <div class="wsec-t">风场要素</div>
+                <div class="wgrid">
+                  <div class="wcell hl"><span class="k">风速</span><span class="v nums" id="w-wind-kt">--<small>kt</small></span></div>
+                  <div class="wcell"><span class="k">风速</span><span class="v nums" id="w-wind-ms">--<small>m/s</small></span></div>
+                  <div class="wcell"><span class="k">中心气压</span><span class="v nums" id="w-pc">--<small>hPa</small></span></div>
+                  <div class="wcell"><span class="k">距岸距离</span><span class="v nums" id="w-dist">--<small>km</small></span></div>
+                  <div class="wcell"><span class="k">移向</span><span class="v nums" id="w-heading">--<small>°</small></span></div>
+                  <div class="wcell"><span class="k">移速</span><span class="v nums" id="w-motion">--<small>kt</small></span></div>
+                </div>
+              </div>
+              <div class="wsec" style="margin-top:6px;flex:1 1 auto;min-height:0;">
+                <div class="wsec-t">工况信息（按村表汇总 · 示意）</div>
+                <table class="ktab">
+                  <thead><tr><th>项目</th><th>数值</th></tr></thead>
+                  <tbody id="ktab-body">
+                    <tr><td>受影响村庄</td><td>--</td></tr>
+                    <tr><td>需转移人口</td><td>--</td></tr>
+                    <tr><td>户数合计</td><td>--</td></tr>
+                    <tr><td>闸泵值守点</td><td>--</td></tr>
+                    <tr><td>避风锚地</td><td>--</td></tr>
+                    <tr><td>最高淹没水深</td><td>--</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 卡 3：分潮与预警 -->
+        <section class="card" style="flex:0 0 246px;">
+          <div class="card-in">
+            <div class="card-head">
+              <i class="bar"></i><h2>分潮与预警</h2>
+              <span class="head-extra" style="font-size:10.5px;color:#7ba7c9;" id="tide-stamp">--</span>
+            </div>
+            <div class="card-body">
+              <div class="tide-grid">
+                <div class="tide-cell"><div class="n">M2</div><div class="a nums" id="td-m2">--</div><div class="p" id="td-m2p">--</div></div>
+                <div class="tide-cell"><div class="n">S2</div><div class="a nums" id="td-s2">--</div><div class="p" id="td-s2p">--</div></div>
+                <div class="tide-cell"><div class="n">K1</div><div class="a nums" id="td-k1">--</div><div class="p" id="td-k1p">--</div></div>
+                <div class="tide-cell"><div class="n">O1</div><div class="a nums" id="td-o1">--</div><div class="p" id="td-o1p">--</div></div>
+              </div>
+              <div class="alert-bar" style="margin-top:8px;">
+                <div class="ab-top"><span>风暴潮预警级别</span><b id="ab-level">--</b></div>
+                <div class="ab-seg" id="ab-seg">
+                  <span data-lv="blue" style="background:#2f81f7;color:#2f81f7"></span>
+                  <span data-lv="yellow" style="background:#ffd166;color:#ffd166"></span>
+                  <span data-lv="orange" style="background:#ffb020;color:#ffb020"></span>
+                  <span data-lv="red" style="background:#ff5c5c;color:#ff5c5c"></span>
+                </div>
+                <div class="ab-legend"><span>蓝</span><span>黄</span><span>橙</span><span>红</span></div>
+              </div>
+              <div class="wsec" style="margin-top:6px;">
+                <div class="wsec-t">当前潮汐状态</div>
+                <div class="wgrid" style="grid-template-columns:1fr 1fr;">
+                  <div class="wcell"><span class="k">天文潮位</span><span class="v nums" id="td-cur">--<small>m</small></span></div>
+                  <div class="wcell"><span class="k">潮态</span><span class="v" id="td-trend">--</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- ============ 页脚 ============ -->
+    <footer class="statusbar">
+      <div class="sb-l">
+        <span><i class="dot" id="sb-dot"></i><span id="sb-health">正在连接推演服务…</span></span>
+        <i>|</i>
+        <span id="sb-engine">engine —</span>
+      </div>
+      <div class="sb-r">
+        <span>数据来源：SRTM 90m 地形 · 台风参数为历史/示意情景 · 天文潮为 M2/S2/K1/O1 调和分潮</span>
+        <i>|</i>
+        <span>演示情景，不用于实际防汛决策</span>
+      </div>
+    </footer>
+
+    <!-- ============ 参数抽屉（外层裁剪，避免离屏抽屉撑大 stage 的 scrollWidth） ============ -->
+    <div class="drawer-host">
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-head">
+        <i class="bar"></i><h2>推演参数（手动覆盖）</h2>
+        <span class="drawer-sub" title="Vmax / Pc / 移速 / 移向 的初值取该台风路径的峰值强度点；手动改过后以你的值为准">初值 = 路径峰值</span>
+        <button type="button" class="icon-btn" data-act="close-drawer" title="关闭">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <div class="p-item" data-k="vmax_kt">
+          <div class="p-top"><span>最大风速 Vmax</span><b><span class="pv">108</span><small>kt</small></b></div>
+          <input type="range" class="p-range" min="60" max="180" step="1" value="108">
+        </div>
+        <div class="p-item" data-k="pc_mb">
+          <div class="p-top"><span>中心气压 Pc</span><b><span class="pv">928</span><small>hPa</small></b></div>
+          <input type="range" class="p-range" min="880" max="1010" step="1" value="928">
+        </div>
+        <div class="p-item" data-k="motion_kt">
+          <div class="p-top"><span>移速</span><b><span class="pv">20</span><small>kt</small></b></div>
+          <input type="range" class="p-range" min="0" max="40" step="1" value="20">
+        </div>
+        <div class="p-item" data-k="heading_deg">
+          <div class="p-top"><span>移向</span><b><span class="pv">297</span><small>°</small></b></div>
+          <input type="range" class="p-range" min="0" max="359" step="1" value="297">
+        </div>
+        <div class="p-item" data-k="holland_b">
+          <div class="p-top"><span>Holland B</span><b><span class="pv">1.70</span><small>—</small></b></div>
+          <input type="range" class="p-range" min="1" max="2.5" step="0.05" value="1.7">
+        </div>
+        <div class="p-item" data-k="rmax_km">
+          <div class="p-top"><span>最大风速半径 Rmax</span><b><span class="pv">40</span><small>km</small></b></div>
+          <input type="range" class="p-range" min="15" max="80" step="1" value="40">
+        </div>
+        <div class="p-item" data-k="m2_amp">
+          <div class="p-top"><span>M2 分潮振幅</span><b><span class="pv">1.00</span><small>m</small></b></div>
+          <input type="range" class="p-range" min="0.2" max="2" step="0.05" value="1">
+        </div>
+        <div class="p-item" data-k="kernel">
+          <div class="p-top"><span>计算内核</span><b><span class="pv" id="kernel-pv">numpy</span></b></div>
+          <div class="switch-row" id="kernel-row">
+            <button type="button" class="chip active" data-kernel="numpy">numpy 复算</button>
+            <button type="button" class="chip" data-kernel="fortran">原 Fortran 内核</button>
+          </div>
+          <div class="p-hint">「原 Fortran 内核」直接调 POSSIM 3.0 的 storm_surge_physics.dll（ctypes，7 s / 37 帧）；找不到 DLL 时自动退回 numpy。两档共用下面的 coarse_amp 倍数，便于同口径对比。</div>
+        </div>
+        <div class="p-item" data-k="coarse_amp">
+          <div class="p-top"><span>粗网格增幅 coarse_amp</span><b><span class="pv">3.8</span></b></div>
+          <div class="switch-row">
+            <button type="button" class="chip active" data-amp="3.8">3.8 演示档</button>
+            <button type="button" class="chip" data-amp="1.0">1.0 物理档</button>
+          </div>
+          <div class="p-hint">overrides 覆盖路径点的 Vmax / Pc / 移速 / 移向；其余参数走 params。</div>
+        </div>
+      </div>
+      <div class="drawer-foot">
+        <button type="button" class="btn primary" data-act="resim">重新推演</button>
+        <button type="button" class="btn" data-act="reset-params">恢复路径值</button>
+      </div>
+    </aside>
+    </div>
+
+    <!-- ============ 关于模态 ============ -->
+    <div class="modal-mask" id="modal-mask">
+      <div class="modal">
+        <div class="modal-in">
+          <h3><i></i>关于本平台</h3>
+          <div class="mc">
+            <p><b>珠江口风暴潮淹没推演平台（POSSIM-Web）</b>是 POSSIM 3.0（C#/.NET + Fortran 版）的浏览器演示移植：把逐像素风暴潮模型（Holland 梯度风 + 反气压增水 + 风增水 + 波增水 + 调合天文潮）挂到一套零构建的 Web 大屏上。</p>
+            <p style="margin-top:8px;">· <b>地形</b>：SRTM 90 m 降采样为 3 角秒（约 103 m）等经纬网格，1188 × 864，范围 113.20–114.20°E / 22.20–23.00°N，行序自北向南。<br>
+            · <b>天文潮</b>：M2 / S2 / K1 / O1 四个分潮按 η = Σ A·cos(ω·h + φ) 叠加，h 为 2000-01-01T00:00Z 起的小时数。<br>
+            · <b>台风</b>：参数来自历史过程线（示意还原），前端可手动覆盖 Vmax / Pc / 移速 / 移向后重新推演。<br>
+            · <b>后处理</b>：淹没深度分级 0–0.33 / 0.33–0.5 / 0.5–1 / 1–2 / 2–3 / 3–5 / &gt;5 m，并做 4 连通性过滤，丢弃不含海岸种子的孤立斑块。</p>
+            <p style="margin-top:8px;">· <b>实现</b>：前端 HTML + CSS + 原生 JS（Leaflet 1.9.4 / ECharts 5.5.1 走 CDN），无构建工具；后端 Python 标准库 http.server + numpy/Pillow。</p>
+          </div>
+          <div class="warn-note">数据与成果仅用于技术演示，台风与灾情为历史/示意情景，<b>不用于实际防汛调度与决策</b>。</div>
+          <div class="m-foot"><button type="button" class="btn" data-act="close-modal">知道了</button></div>
+        </div>
+        <button type="button" class="icon-btn modal-close" data-act="close-modal" title="关闭">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 提示条 / 错误条 / 兜底角标 -->
+    <div class="toast" id="toast"></div>
+    <div class="errbar" id="errbar">
+      <span class="ek">!</span>
+      <span id="errbar-msg">无法连接推演服务，请先运行 启动.cmd</span>
+      <button type="button" class="retry" id="btn-retry">重试</button>
+    </div>
+    <div class="demo-badge" id="demo-badge">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 9v5M12 17v.6"/><path d="M10.2 3.8L2.6 17.2A1.9 1.9 0 004.3 20h15.4a1.9 1.9 0 001.7-2.8L13.8 3.8a1.9 1.9 0 00-3.6 0z"/></svg>
+      演示兜底数据
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ 第三方库（CDN + unpkg 兜底） ============ -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script>
+/* jsdelivr 不可达时同步回退到 unpkg，保证后续本地脚本能看到 window.L / window.echarts */
+(function () {
+  var jd = 'https://cdn.jsdelivr.net/npm/', up = 'https://unpkg.com/';
+  var pkgs = [
+    { g: window.L, css: 'leaflet@1.9.4/dist/leaflet.css', js: 'leaflet@1.9.4/dist/leaflet.js' },
+    { g: window.echarts, css: '', js: 'echarts@5.5.1/dist/echarts.min.js' }
+  ];
+  for (var i = 0; i < pkgs.length; i++) {
+    if (!pkgs[i].g) {
+      document.write('<scr' + 'ipt src="' + up + pkgs[i].js + '"></scr' + 'ipt>');
+    }
+  }
+})();
+</script>
+
+<!-- ============ 本地脚本（顺序加载，全局命名空间） ============ -->
+<script>window.POSSIM_STATIC = true;</script>
+<script src="js/api.js"></script>
+<script src="js/static.js"></script>
+<script src="js/map.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/wind.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

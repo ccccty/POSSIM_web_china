@@ -1,0 +1,272 @@
+{
+ "site": {
+  "name": "珠江口风暴潮淹没推演平台",
+  "region": "珠江口-伶仃洋",
+  "crs": "EPSG:4326",
+  "bbox": [
+   113.2,
+   22.2,
+   114.2,
+   23.0
+  ],
+  "nx": 1188,
+  "ny": 864,
+  "pixel_deg": 0.000925926,
+  "pixel_deg_x": 0.000841751,
+  "pixel_deg_y": 0.000925926,
+  "pixel_m": 94.3,
+  "pixel_m_lon": 86.5,
+  "pixel_m_lat": 102.8,
+  "area_km2": 9126.1,
+  "land_area_km2": 7463.9,
+  "note": "数据：SRTM 1角秒(约30 m)重采样至网格（等效格 94.3 m）· 台风参数为历史/示意情景"
+ },
+ "dem": {
+  "file": "dem.npy",
+  "nodata": -9999,
+  "min": -2.0,
+  "max": 946.3,
+  "land_pixels": 839346,
+  "mean_elev": 41.7,
+  "median_elev": 9.4,
+  "land_ratio": 0.818,
+  "ocean_level": -2.0
+ },
+ "map": {
+  "center": [
+   22.6,
+   113.7
+  ],
+  "zoom": 11,
+  "bbox_leaflet": [
+   [
+    22.2,
+    113.2
+   ],
+   [
+    23.0,
+    114.2
+   ]
+  ],
+  "preview_png": "/api/dem/preview.png"
+ },
+ "defaults": {
+  "env_pressure": 1013.0,
+  "holland_b": 1.7,
+  "wave_runup": 1.15,
+  "coarse_amp": 3.8,
+  "tide": {
+   "M2": [
+    1.0,
+    145.0
+   ],
+   "S2": [
+    0.4,
+    45.0
+   ],
+   "K1": [
+    0.3,
+    75.0
+   ],
+   "O1": [
+    0.2,
+    120.0
+   ]
+  },
+  "hours": 36,
+  "step_hours": 1
+ },
+ "typhoons": [
+  {
+   "id": "mangkhut",
+   "name": "山竹",
+   "name_en": "Mangkhut",
+   "year": 2018,
+   "vmax_kt": 108,
+   "pc_mb": 928
+  },
+  {
+   "id": "saola",
+   "name": "苏拉",
+   "name_en": "Saola",
+   "year": 2023,
+   "vmax_kt": 100,
+   "pc_mb": 926
+  },
+  {
+   "id": "hato",
+   "name": "天鸽",
+   "name_en": "Hato",
+   "year": 2017,
+   "vmax_kt": 100,
+   "pc_mb": 942
+  }
+ ],
+ "villages": [
+  {
+   "name": "南沙区龙穴街道",
+   "lat": 22.6847,
+   "lon": 113.6348,
+   "pop": 12000,
+   "households": 4300,
+   "dist_coast_km": 0.8,
+   "elev_m": 2.2,
+   "strategy": "转移",
+   "level": "高"
+  },
+  {
+   "name": "南沙区万顷沙镇",
+   "lat": 22.6097,
+   "lon": 113.554,
+   "pop": 24000,
+   "households": 8200,
+   "dist_coast_km": 2.2,
+   "elev_m": 1.1,
+   "strategy": "转移",
+   "level": "高"
+  },
+  {
+   "name": "南沙区珠江街道",
+   "lat": 22.7394,
+   "lon": 113.6003,
+   "pop": 15000,
+   "households": 5400,
+   "dist_coast_km": 0.4,
+   "elev_m": 3.1,
+   "strategy": "避险",
+   "level": "中"
+  },
+  {
+   "name": "中山市南朗镇崖口村",
+   "lat": 22.4921,
+   "lon": 113.5497,
+   "pop": 6800,
+   "households": 2400,
+   "dist_coast_km": 2.5,
+   "elev_m": 3.7,
+   "strategy": "待命",
+   "level": "低"
+  },
+  {
+   "name": "东莞市虎门镇",
+   "lat": 22.8088,
+   "lon": 113.6701,
+   "pop": 42000,
+   "households": 14000,
+   "dist_coast_km": 2.6,
+   "elev_m": 4.8,
+   "strategy": "待命",
+   "level": "低"
+  },
+  {
+   "name": "珠海市唐家湾镇",
+   "lat": 22.3616,
+   "lon": 113.5944,
+   "pop": 32000,
+   "households": 11000,
+   "dist_coast_km": 1.4,
+   "elev_m": 2.7,
+   "strategy": "转移",
+   "level": "高"
+  },
+  {
+   "name": "珠海市淇澳社区",
+   "lat": 22.4264,
+   "lon": 113.66,
+   "pop": 3200,
+   "households": 1200,
+   "dist_coast_km": 0.8,
+   "elev_m": 1.0,
+   "strategy": "转移",
+   "level": "高"
+  },
+  {
+   "name": "珠海市香湾街道",
+   "lat": 22.2903,
+   "lon": 113.575,
+   "pop": 26000,
+   "households": 9000,
+   "dist_coast_km": 0.4,
+   "elev_m": 2.6,
+   "strategy": "转移",
+   "level": "高"
+  },
+  {
+   "name": "珠海市香洲区湾仔街道",
+   "lat": 22.2153,
+   "lon": 113.5346,
+   "pop": 18000,
+   "households": 6300,
+   "dist_coast_km": 2.7,
+   "elev_m": 1.5,
+   "strategy": "避险",
+   "level": "中"
+  },
+  {
+   "name": "深圳市宝安区西乡街道",
+   "lat": 22.5718,
+   "lon": 113.8561,
+   "pop": 45000,
+   "households": 15000,
+   "dist_coast_km": 1.4,
+   "elev_m": 4.9,
+   "strategy": "避险",
+   "level": "中"
+  },
+  {
+   "name": "深圳市南山区前海社区",
+   "lat": 22.5394,
+   "lon": 113.8957,
+   "pop": 21000,
+   "households": 7400,
+   "dist_coast_km": 0.4,
+   "elev_m": 1.5,
+   "strategy": "转移",
+   "level": "高"
+  },
+  {
+   "name": "深圳市南山区蛇口街道",
+   "lat": 22.481,
+   "lon": 113.9134,
+   "pop": 38000,
+   "households": 13000,
+   "dist_coast_km": 0.4,
+   "elev_m": 3.8,
+   "strategy": "转移",
+   "level": "高"
+  },
+  {
+   "name": "香港屯门区三圣邨",
+   "lat": 22.3829,
+   "lon": 113.9639,
+   "pop": 15000,
+   "households": 5500,
+   "dist_coast_km": 2.5,
+   "elev_m": 1.1,
+   "strategy": "避险",
+   "level": "中"
+  },
+  {
+   "name": "香港元朗区流浮山",
+   "lat": 22.4699,
+   "lon": 113.9858,
+   "pop": 9000,
+   "households": 3200,
+   "dist_coast_km": 0.6,
+   "elev_m": 4.9,
+   "strategy": "待命",
+   "level": "低"
+  },
+  {
+   "name": "澳门花地玛堂区",
+   "lat": 22.2153,
+   "lon": 113.5481,
+   "pop": 22000,
+   "households": 7600,
+   "dist_coast_km": 1.2,
+   "elev_m": 4.6,
+   "strategy": "待命",
+   "level": "低"
+  }
+ ]
+}

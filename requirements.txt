@@ -1,0 +1,4 @@
+# POSSIM-Web 运行依赖（Python 3.10+）
+# 只跑静态站点 docs/ 的话不需要装任何依赖
+numpy>=1.24
+pillow>=10.0
