@@ -493,7 +493,10 @@
     var ico1 = $('ico-play'), ico2 = $('ico-pause');
     if (ico1) ico1.style.display = '';
     if (ico2) ico2.style.display = 'none';
-    if (S.frames.length) showStatus('ok', '就绪 · ' + S.frames.length + ' 帧');
+    if (S.frames.length) {
+      var km = (S.sim && S.sim.kernel && S.sim.kernel.kernel === 'fortran') ? '原内核' : 'numpy';
+      showStatus('ok', '就绪 · ' + (isStatic() ? '静态预计算 · ' + km + ' · ' : '') + S.frames.length + ' 帧');
+    }
   }
   function togglePlay() { if (S.playing) pause(); else play(); }
 
