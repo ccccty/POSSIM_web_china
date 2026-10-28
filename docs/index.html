@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>POSSIM-Web · 珠江口风暴潮淹没推演平台</title>
-<meta name="description" content="把 .NET + Fortran 的桌面风暴潮软件重做成浏览器里的推演大屏：1188×864 逐像素栅格、36 小时 37 帧、3 场历史台风，原 Fortran 物理内核 ctypes 直连。">
+<meta name="description" content="将基于 .NET 与 Fortran 的珠江口风暴潮淹没推演程序迁移为浏览器应用：1188×864 栅格逐格计算，36 小时 37 帧演进，并提供 numpy 复现内核与原 Fortran 内核的逐帧对照。">
 <meta name="theme-color" content="#04101f">
-<meta property="og:title" content="POSSIM-Web · 珠江口风暴潮淹没推演平台">
-<meta property="og:description" content="浏览器里的风暴潮淹没推演大屏：逐像素物理场 + 原 Fortran 内核直连 + 零后端静态演示。">
 <meta property="og:type" content="website">
 <meta property="og:image" content="assets/hero-shot.webp">
 <meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="POSSIM-Web · 珠江口风暴潮淹没推演平台">
+<meta property="og:description" content="珠江口风暴潮淹没推演的浏览器端实现：逐格物理计算、四内核工况对照、静态化发布。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23061a2e'/%3E%3Cpath d='M6 20c3-6 6 2 9-3s5 1 9-4' stroke='%2335e0ff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="landing.css">
 </head>
@@ -27,237 +27,283 @@
     <span class="brand-txt">POSSIM<em>·Web</em></span>
   </a>
   <nav class="nav-links">
+    <a href="#purpose">用途</a>
     <a href="#cases">情景</a>
-    <a href="#pipeline">推演链路</a>
-    <a href="#kernels">双内核</a>
-    <a href="#response">参数响应</a>
-    <a href="#stack">技术栈</a>
-    <a href="#data">数据边界</a>
+    <a href="#pipeline">计算流程</a>
+    <a href="#kernels">内核对照</a>
+    <a href="#stack">技术实现</a>
+    <a href="#data">数据说明</a>
   </nav>
-  <a class="nav-cta" href="app.html">进入演示 <span>→</span></a>
+  <a class="nav-cta" href="app.html">进入演示系统 <span>→</span></a>
 </header>
 
-<!-- ======================= HERO ======================= -->
+<!-- ======================= 首屏 ======================= -->
 <section class="hero" id="top">
   <canvas id="hero-canvas" aria-hidden="true"></canvas>
   <div class="hero-veil"></div>
   <div class="hero-inner">
-    <p class="eyebrow"><i></i>STORM SURGE · INUNDATION · PEARL RIVER ESTUARY</p>
-    <h1>把风暴潮推演<br><span class="grad">搬进浏览器</span></h1>
+    <p class="eyebrow"><i></i>STORM SURGE INUNDATION · PEARL RIVER ESTUARY · WEB IMPLEMENTATION</p>
+    <h1>珠江口风暴潮淹没推演<br><span class="grad">浏览器端实现</span></h1>
     <p class="lede">
-      一套原本只能在 Windows 桌面上点开的 <b>.NET + Fortran</b> 风暴潮软件，
-      被重做成可交互的 Web 大屏：<b>1188×864 逐像素</b>物理场、<b>36 小时 37 帧</b>淹没演进、
-      <b>3 场历史台风</b>重放，原 Fortran 物理内核用 <code>ctypes</code> 直接驱动。
+      将原运行于 Windows 桌面的 <b>.NET + Fortran</b> 推演程序迁移为 Web 应用：在
+      <b>1188×864</b> 栅格上逐格计算 Holland 风场、反气压、风增水、波增水与四分潮，
+      叠合地形高程判定淹没，输出 <b>36 小时 37 帧</b>演进结果；并提供 numpy 复现内核与
+      原 Fortran 内核的逐帧对照。
     </p>
     <div class="hero-actions">
       <a class="btn btn-primary" href="app.html">
-        打开推演大屏
+        进入推演系统
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
       </a>
-      <a class="btn btn-ghost" href="#kernels">看两套内核的差距</a>
+      <a class="btn btn-ghost" href="#kernels">查看内核对照</a>
     </div>
 
     <ul class="stats">
       <li><b>1188<span>×</span>864</b><i>栅格 · 94.3 m</i></li>
       <li><b>37</b><i>帧 · 36 小时</i></li>
       <li><b>3</b><i>场历史台风</i></li>
-      <li><b id="stat-fastest">7.0<span>s</span></b><i>全流程耗时</i></li>
+      <li><b id="stat-fastest">4.2<span>s</span></b><i>单次计算耗时</i></li>
       <li><b>2</b><i>套计算内核</i></li>
     </ul>
     <p class="hero-scroll"><span></span>向下滚动</p>
   </div>
 </section>
 
-<!-- ======================= 大屏实拍 ======================= -->
+<!-- ======================= 系统界面 ======================= -->
 <section class="showcase">
   <div class="shot-frame">
     <div class="sf-bar">
       <i></i><i></i><i></i>
-      <span>app.html · 静态演示版 · 1920×1080</span>
+      <span>app.html · 静态发布版 · 1920×1080</span>
     </div>
-    <a class="sf-link" href="app.html" aria-label="打开推演大屏">
-      <img src="assets/hero-shot.webp" alt="珠江口风暴潮淹没推演大屏：左侧台风态势与受影响行政村，中间淹没栅格地图，右侧潮位与增水曲线" loading="eager">
-      <span class="sf-hover">点开可交互的大屏 →</span>
+    <a class="sf-link" href="app.html" aria-label="进入推演系统">
+      <img src="assets/hero-shot.webp" alt="推演系统界面：左侧台风要素与受影响行政村，中部淹没栅格与台风路径，右侧潮位与增水过程线" loading="eager">
+      <span class="sf-hover">进入推演系统 →</span>
     </a>
   </div>
-  <p class="sf-cap">同一份 DEM、同一套物理内核，在浏览器里逐像素演进。左侧行政村按当前帧水深实时重排，右侧曲线是该场台风的潮位—增水—总水位过程线。</p>
+  <p class="sf-cap">图为山竹台风 Hour +020 的淹没分布。左栏为台风要素与受影响行政村（按当帧水深排序），中栏为淹没栅格与路径，右栏为潮位、增水与总水位过程线。</p>
+</section>
+
+<!-- ======================= 用途 ======================= -->
+<section class="sec" id="purpose">
+  <div class="sec-head">
+    <p class="kicker">01 / PURPOSE</p>
+    <h2>工程用途</h2>
+    <p class="sub">本工程面向四类用途：机理演示、内核移植验证、桌面程序 Web 化方案参考，以及给定情景下的淹没范围初筛。</p>
+  </div>
+  <div class="stack-grid uses">
+    <div class="scard">
+      <h3>风暴潮机理演示</h3>
+      <ul>
+        <li>按帧展示风场、气压、天文潮到淹没的完整链路</li>
+        <li>同一场台风可逐小时查看中心位置、强度与淹没范围</li>
+        <li>适用于教学、汇报与科普场景</li>
+      </ul>
+      <p class="tag">教学 / 演示</p>
+    </div>
+    <div class="scard">
+      <h3>内核移植与结果对照</h3>
+      <ul>
+        <li>保留原 Fortran 内核调用路径，与 numpy 复现实现共用输入与后处理</li>
+        <li>同一帧、同一 DEM 下逐项比对增水、淹没面积与耗时</li>
+        <li>用于定位两套实现的系统性差异，而非拟合单一数值</li>
+      </ul>
+      <p class="tag">算法验证 / 移植</p>
+    </div>
+    <div class="scard">
+      <h3>桌面程序 Web 化参考</h3>
+      <ul>
+        <li>二进制计算内核以 ctypes 复用，不重写物理部分</li>
+        <li>前端零构建，服务端仅用 Python 标准库</li>
+        <li>预计算 + 静态托管，可供同类科研软件迁移参考</li>
+      </ul>
+      <p class="tag">工程方案</p>
+    </div>
+    <div class="scard">
+      <h3>情景淹没初筛</h3>
+      <ul>
+        <li>给定路径与强度参数，估算淹没范围、水深分级与受影响行政村</li>
+        <li>输出可直接导出为 PNG 与 summary JSON</li>
+        <li>用于方案比选与教学示例，输出精度见第 07 节</li>
+      </ul>
+      <p class="tag">情景评估</p>
+    </div>
+  </div>
 </section>
 
 <!-- ======================= 情景 ======================= -->
-<section class="sec" id="cases">
+<section class="sec sec-alt" id="cases">
   <div class="sec-head">
-    <p class="kicker">01 / SCENARIOS</p>
-    <h2>三场真实路径，三组推演结果</h2>
-    <p class="sub">路径点、气压、四象限风圈按 JTWC / JMA / CMA 公开最佳路径的量级编排，逐小时插值后送入物理内核。切换下面的档位可以看到同一场台风在两种增幅下的差别。</p>
+    <p class="kicker">02 / SCENARIOS</p>
+    <h2>三场历史台风的重放结果</h2>
+    <p class="sub">路径点、中心气压与四象限风圈依据 JTWC / JMA / CMA 公开最佳路径的量级构建，经逐小时线性插值后输入计算内核。下列指标取各自时段的峰值帧。</p>
     <div class="amp-toggle" id="amp-toggle">
-      <button type="button" data-amp="3.8" class="on">3.8 演示档</button>
-      <button type="button" data-amp="1.0">1.0 物理档</button>
-      <span class="amp-hint" id="amp-hint">对齐原厂在粗网格上的经验放大，观感接近 POSSIM 桌面版</span>
+      <button type="button" data-amp="3.8" class="on">增幅档 3.8</button>
+      <button type="button" data-amp="1.0">增幅档 1.0</button>
+      <span class="amp-hint" id="amp-hint">与原 POSSIM 在粗网格上的经验增幅一致</span>
     </div>
   </div>
   <div class="cases" id="case-grid"><!-- JS 注入 --></div>
   <p class="case-foot">
     <span class="dot-live"></span>
-    数字取自静态数据包 <code>data/build/manifest.json</code>，每一格都能在大屏里点到对应时刻。
+    指标取自静态数据包 <code>data/build/manifest.json</code>，逐时刻数值可在推演系统时间轴上核对。
   </p>
 </section>
 
-<!-- ======================= 推演链路 ======================= -->
-<section class="sec sec-alt" id="pipeline">
+<!-- ======================= 计算流程 ======================= -->
+<section class="sec" id="pipeline">
   <div class="sec-head">
-    <p class="kicker">02 / PIPELINE</p>
-    <h2>一次推演，真实发生了什么</h2>
-    <p class="sub">没有贴图、没有预烘焙动画：37 帧中的每一帧，都是同一套公式在 1188×864 个格点上重算一遍。</p>
+    <p class="kicker">03 / PIPELINE</p>
+    <h2>计算流程</h2>
+    <p class="sub">37 帧结果均由同一组公式在 1188×864 个格点上逐帧计算得到，不包含预渲染图像或插值动画。</p>
   </div>
   <ol class="flow">
     <li>
       <span class="no">01</span>
       <h3>路径插值</h3>
-      <p>12–17 个 3/6 小时报点，按 <code>np.interp</code> 分段线性插到逐小时；移速与移向由相邻点中心差分得出，位置与移向不会自相矛盾。</p>
+      <p>12–17 个 3/6 小时报点经 <code>np.interp</code> 分段线性插值至逐小时；移速与移向由相邻报点中心差分得到。</p>
     </li>
     <li>
       <span class="no">02</span>
       <h3>Holland 风场</h3>
-      <p>梯度风 <code>V(r)</code> 由中心气压差与最大风速半径决定；四象限 <code>r34/r50/r64</code> 各自展开，台风不对称性被保留。</p>
+      <p>梯度风 <code>V(r)</code> 由中心气压差与最大风速半径确定；四象限 <code>r34/r50/r64</code> 独立展开，保留台风不对称性。</p>
     </li>
     <li>
       <span class="no">03</span>
-      <h3>增水三件套</h3>
-      <p>静压平衡的反气压项 + 风应力增水（拖曳系数随风速分段）+ 波增水（有效波高换算），逐格点叠加。</p>
+      <h3>增水项叠加</h3>
+      <p>静压平衡的反气压项、风应力增水（拖曳系数随风速分段）与波增水（有效波高换算）逐格点相加。</p>
     </li>
     <li>
       <span class="no">04</span>
       <h3>天文潮叠加</h3>
-      <p>M2 / S2 / K1 / O1 四个分潮按 <code>η = Σ A·cos(ωt + φ)</code> 合成，与风暴增水线性叠加成总水位。</p>
+      <p>M2 / S2 / K1 / O1 四个分潮按 <code>η = Σ A·cos(ωt + φ)</code> 合成，与风暴增水线性叠加为总水位。</p>
     </li>
     <li>
       <span class="no">05</span>
       <h3>淹没判定</h3>
-      <p>总水位高于地面高程即淹没，深度 = 水位 − 高程；再做 4 连通斑块过滤，丢掉不含海岸种子的孤立噪点。</p>
+      <p>总水位高于地面高程即判为淹没，水深为两者之差；随后执行 4 连通斑块过滤，去除不含海岸种子的孤立像元。</p>
     </li>
     <li>
       <span class="no">06</span>
-      <h3>分级渲染</h3>
-      <p>按 0–0.33 / 0.5 / 1 / 2 / 3 / 5 m 七级配色渲染成 RGBA 叠加图，交给 Leaflet 贴合经纬度铺在底图上。</p>
+      <h3>分级成图</h3>
+      <p>按 0–0.33 / 0.5 / 1 / 2 / 3 / 5 m 七级配色渲染为 RGBA 图层，交 Leaflet 按经纬度范围叠加于底图。</p>
     </li>
   </ol>
 </section>
 
 <!-- ======================= 参数响应 ======================= -->
-<section class="sec" id="response">
+<section class="sec sec-alt" id="response">
   <div class="sec-head">
-    <p class="kicker">03 / RESPONSE</p>
-    <h2>参数一改，结果真的会动</h2>
-    <p class="sub">把山竹整条路径的 Vmax 从 75 kt 一路拧到 165 kt，其余参数不动，重算 7 次。下面两条线是每次的峰值增水与峰值淹没面积 —— 这不是换图，是真的在算。</p>
+    <p class="kicker">04 / RESPONSE</p>
+    <h2>最大风速与增水、淹没面积的响应关系</h2>
+    <p class="sub">固定其余参数，将山竹路径的最大风速分别设为 75 / 90 / 105 / 120 / 135 / 150 / 165 kt，各计算一次，取峰值增水与峰值淹没面积。</p>
   </div>
   <div class="resp">
     <div class="resp-chart">
-      <svg id="sweep-svg" viewBox="0 0 720 348" role="img" aria-label="Vmax 与峰值增水、淹没面积的响应曲线"></svg>
+      <svg id="sweep-svg" viewBox="0 0 720 348" role="img" aria-label="最大风速与峰值增水、峰值淹没面积的响应曲线"></svg>
       <div class="resp-legend">
         <span><i class="l-surge"></i>峰值增水 <b>m</b></span>
         <span><i class="l-area"></i>峰值淹没面积 <b>ha</b></span>
       </div>
     </div>
     <div class="resp-note">
-      <h3>读这条线的三个要点</h3>
-      <p><b>1 · 单调但不线性。</b>增水随 Vmax 近似线性爬升（1.33 → 2.36 m），面积却在 150 kt 之后突然加速（21,193 → 34,484 ha）。因为面积受地形阈值控制，水位再抬 10 cm 就可能多淹几千公顷。</p>
-      <p><b>2 · 面积不能当精度证据。</b>珠江口围田高程多在 0–1 m，总水位差 10 cm 就能让面积跳变，所以比较两套内核时必须比增水，而不是比面积。</p>
-      <p><b>3 · 这张表是离线算出来的。</b>线上站点直接读这 7 组结果；本地跑 <code>python server.py</code> 可以自己拖滑块重算任意参数。</p>
+      <h3>结果说明</h3>
+      <p><b>增水近似线性。</b>Vmax 由 75 kt 增至 165 kt，峰值增水由 1.33 m 增至 2.36 m，增量与风速增量基本成比例。</p>
+      <p><b>面积呈阈值特征。</b>150 kt 之后淹没面积由 21,193 ha 增至 34,484 ha，增长率明显提高：淹没范围受地面高程阈值控制，水位继续抬升会使大片低平地连片过水。</p>
+      <p><b>指标选择。</b>研究区围田高程多在 0–1 m，总水位变化 0.1 m 即可引起面积大幅变化，故两套内核之间宜比较增水，面积仅作参考。</p>
+      <p class="mini">曲线由离线计算的 7 组结果生成；本地启动 <code>server.py</code> 可对任意参数实时计算。</p>
     </div>
   </div>
 </section>
 
-<!-- ======================= 双内核 ======================= -->
+<!-- ======================= 内核对照 ======================= -->
 <section class="sec" id="kernels">
   <div class="sec-head">
-    <p class="kicker">04 / TWO KERNELS</p>
-    <h2>把原厂 DLL 直接接进浏览器后端</h2>
+    <p class="kicker">05 / KERNELS</p>
+    <h2>原 Fortran 内核的复用与对照</h2>
     <p class="sub">
-      POSSIM 3.0 的物理内核是编译好的 <code>storm_surge_physics.dll</code>（x64 + gfortran 静态链接）。
-      它不需要 GUI、不需要 .NET —— 按 C# 里的 P/Invoke 签名用 ctypes 调起来就直接跑，一帧 0.69 s，8 线程 37 帧 7 秒。
-      于是同一份 DEM、同一帧参数，可以拿两套内核互相对拍。
+      POSSIM 3.0 的物理内核为编译后的 <code>storm_surge_physics.dll</code>（x64，gfortran 静态链接），不依赖 GUI 与 .NET。
+      按原 C# 中的 P/Invoke 签名以 ctypes 调用即可运行，单帧 0.69 s，8 线程下 37 帧约 5–7 s。
+      在同一份 DEM 与同一帧输入下，两套内核可逐项对照。
     </p>
   </div>
 
   <div class="kernel-grid">
     <div class="ktable">
-      <div class="kt-head"><span>指标（山竹 · Hour +020 · 3.8 档）</span><span class="c-np">numpy 复算</span><span class="c-ft">原 Fortran</span></div>
+      <div class="kt-head"><span>指标（山竹 · Hour +020 · 增幅 3.8）</span><span class="c-np">numpy 复现</span><span class="c-ft">原 Fortran</span></div>
       <div class="kt-row"><span>峰值增水</span><span>1.664 m</span><span class="em">1.178 m</span></div>
       <div class="kt-row"><span>峰值淹没面积</span><span>20,846 ha</span><span class="em">14,758 ha</span></div>
-      <div class="kt-row"><span>最大淹没深度</span><span>1.835 m</span><span class="em">1.466 m</span></div>
-      <div class="kt-row"><span>37 帧耗时</span><span>4.0–5.0 s</span><span class="em">7.0–7.5 s</span></div>
-      <div class="kt-row"><span>实现</span><span>numpy 向量化</span><span class="em">ctypes 直连 DLL</span></div>
+      <div class="kt-row"><span>最大淹没水深</span><span>1.835 m</span><span class="em">1.466 m</span></div>
+      <div class="kt-row"><span>37 帧耗时</span><span>4.0–4.5 s</span><span class="em">5–7 s</span></div>
+      <div class="kt-row"><span>实现方式</span><span>numpy 向量化</span><span class="em">ctypes 调用 DLL</span></div>
     </div>
     <div class="knote">
-      <h3>差 1.4 倍，但不是常数偏差</h3>
-      <p>把台风压在网格中心（pc 900 / 110 kt）：内核 <b>1.057 m</b>，numpy 只有 <b>0.745 m</b> —— numpy 反而偏低 30%。<br>
-         台风在 119 km 外（山竹真实最近距离）：内核 <b>0.276 m</b>，numpy <b>0.438 m</b> —— numpy 反而偏高 59%。</p>
-      <p>原因在径向衰减的形状：原厂风增水是 <code>0.0291572 × W</code> 的<b>一次项</b>，与水深、风区无关；numpy 版按风应力平方走<b>二次项</b>。近中心二次项偏小、远处偏大，交叉点自然落在中间。</p>
-      <p class="mini">顺带把原厂子公式反解出来了：风增水 <code>0.0291572·W</code>、波增水 <code>7.6e-4·W²</code>（W&gt;15 起算）、拖曳系数分段线性。<code>scripts/probe_kernel_physics.py</code> 可复现。</p>
+      <h3>差异来源：径向衰减形式不同</h3>
+      <p>将台风置于网格中心（Pc 900 hPa / Vmax 110 kt）：原内核 1.057 m，numpy 0.745 m，后者偏低 30%。<br>
+         台风位于 119 km 外（山竹实际最近距离）：原内核 0.276 m，numpy 0.438 m，后者偏高 59%。</p>
+      <p>原内核的风增水为一次项 <code>0.0291572 × W</code>，与水深、风区无关；numpy 实现按风应力平方取二次项。近中心处二次项偏小、远场偏大，两曲线在中间距离交叉，因此差值不是常数偏移。</p>
+      <p class="mini">原内核子公式可由 <code>scripts/probe_kernel_physics.py</code> 复现：风增水 <code>0.0291572·W</code>，波增水 <code>7.6e-4·W²</code>（W&gt;15 起算），拖曳系数分段线性。</p>
     </div>
   </div>
 
   <div class="shots" id="gallery"><!-- JS 注入 --></div>
 </section>
 
-<!-- ======================= 技术栈 ======================= -->
+<!-- ======================= 技术实现 ======================= -->
 <section class="sec sec-alt" id="stack">
   <div class="sec-head">
-    <p class="kicker">05 / UNDER THE HOOD</p>
-    <h2>零构建、零框架、零后端也能演示</h2>
-    <p class="sub">整站没有 npm、没有打包器、没有数据库。本地是 Python 标准库 HTTP 服务 + 物理内核，线上是预计算帧 + 静态托管。</p>
+    <p class="kicker">06 / IMPLEMENTATION</p>
+    <h2>技术实现</h2>
+    <p class="sub">前端为零构建的原生 HTML/CSS/JavaScript；计算端为 Python 标准库 HTTP 服务与 numpy；发布采用预计算静态包，无需后端运行时。</p>
   </div>
   <div class="stack-grid">
     <div class="scard">
       <h3>物理内核</h3>
-      <ul><li>Holland 梯度风 / 四象限风圈</li><li>反气压 + 风增水 + 波增水</li><li>M2/S2/K1/O1 四分潮</li><li>4 连通淹没斑块过滤</li></ul>
+      <ul><li>Holland 梯度风与四象限风圈</li><li>反气压、风增水、波增水</li><li>M2/S2/K1/O1 四分潮</li><li>4 连通淹没斑块过滤</li></ul>
       <p class="tag">numpy · Pillow</p>
     </div>
     <div class="scard">
-      <h3>原厂内核直连</h3>
-      <ul><li>ctypes 按 P/Invoke 签名调用</li><li>DLL 自动定位 + 线程池</li><li>缺失/崩溃自动回退 numpy</li><li>子公式探针脚本可复现</li></ul>
+      <h3>原内核调用</h3>
+      <ul><li>ctypes 按 P/Invoke 签名调用</li><li>DLL 路径自动定位与线程池</li><li>缺失或异常时回退 numpy</li><li>子公式探针脚本可复现</li></ul>
       <p class="tag">ctypes · storm_surge_physics.dll</p>
     </div>
     <div class="scard">
       <h3>前端</h3>
-      <ul><li>原生 ES5 + 全局命名空间</li><li>Leaflet 叠加地理配准栅格</li><li>Canvas 粒子风场（6000 粒子）</li><li>ECharts 潮位/增水曲线</li></ul>
+      <ul><li>原生 ES5，全局命名空间</li><li>Leaflet 叠加地理配准栅格</li><li>Canvas 粒子风场（6000 粒子）</li><li>ECharts 绘制潮位与增水曲线</li></ul>
       <p class="tag">HTML / CSS / JS · CDN</p>
     </div>
     <div class="scard">
-      <h3>发布</h3>
-      <ul><li>12 组工况离线预计算</li><li>逐帧 PNG + 元数据 JSON</li><li>静态站点，GitHub Pages 托管</li><li>URL 深链直达任意画面</li></ul>
-      <p class="tag">静态导出 · Pages</p>
+      <h3>发布方式</h3>
+      <ul><li>12 组工况离线预计算</li><li>逐帧 PNG 与元数据 JSON</li><li>静态站点托管</li><li>URL 参数直达指定画面</li></ul>
+      <p class="tag">静态导出 · GitHub Pages</p>
     </div>
   </div>
 
   <div class="flowline">
     <span>台风机理 JSON</span><i>→</i>
     <span>engine.simulate()</span><i>→</i>
-    <span>37 帧 RGBA + 指标</span><i>→</i>
+    <span>37 帧 RGBA 与指标</span><i>→</i>
     <span>Leaflet / ECharts</span><i>→</i>
-    <span>大屏</span>
+    <span>演示系统</span>
   </div>
 </section>
 
-<!-- ======================= 数据边界 ======================= -->
+<!-- ======================= 数据说明 ======================= -->
 <section class="sec" id="data">
   <div class="sec-head">
-    <p class="kicker">06 / DATA &amp; LIMITS</p>
-    <h2>哪些是真的，哪些是示意</h2>
-    <p class="sub">这个项目最容易被追问的地方，恰好也是最该写清楚的地方。</p>
+    <p class="kicker">07 / DATA</p>
+    <h2>数据来源与适用范围</h2>
+    <p class="sub">地形与底图为实测数据；台风路径为历史量级重放；潮汐常数与人口为示意值。各项来源与性质如下。</p>
   </div>
   <div class="dt">
     <div class="dt-row dt-head"><span>数据项</span><span>来源</span><span>性质</span></div>
-    <div class="dt-row"><span>地形 DEM</span><span>AWS Terrain Tiles（NASA SRTM 1″）重采样至 94.3 m</span><span class="ok">真实</span></div>
-    <div class="dt-row"><span>底图</span><span>ArcGIS World Imagery（WGS84）/ 高德矢量兜底</span><span class="ok">真实</span></div>
-    <div class="dt-row"><span>台风路径</span><span>手工编排，量级参考 JTWC / JMA / CMA 最佳路径</span><span class="mid">历史重放，非预报</span></div>
-    <div class="dt-row"><span>增水</span><span>本地按 Holland 公式计算，非外部数据</span><span class="mid">公式有出处，量级经标定</span></div>
-    <div class="dt-row"><span>天文潮</span><span>4 个分潮常量表</span><span class="mid">示意值</span></div>
-    <div class="dt-row"><span>村庄</span><span>15 个真实地名 + DEM 吸附坐标，人口户数为示意</span><span class="mid">半真</span></div>
-  </div>
-  <div class="warn">
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 9v5M12 17v.6"/><path d="M10.2 3.8L2.6 17.2A1.9 1.9 0 004.3 20h15.4a1.9 1.9 0 001.7-2.8L13.8 3.8a1.9 1.9 0 00-3.6 0z"/></svg>
-    <p><b>这是情景演示，不是水动力模型。</b>没有接 ECMWF/GFS 预报场，没有潮波方程数值求解，潮位在全区用同一个标量。它适合演示「一场台风会把多少平方公里推上水面」「两套内核算出来的差在哪」，不适合用于防汛调度与决策。</p>
+    <div class="dt-row"><span>地形 DEM</span><span>AWS Terrain Tiles（NASA SRTM 1″）重采样至 94.3 m 格网</span><span class="ok">实测</span></div>
+    <div class="dt-row"><span>底图</span><span>ArcGIS World Imagery（WGS84）/ 高德矢量（兜底）</span><span class="ok">实测</span></div>
+    <div class="dt-row"><span>台风路径</span><span>按 JTWC / JMA / CMA 最佳路径量级构建的路径参数表</span><span class="mid">历史重放</span></div>
+    <div class="dt-row"><span>增水</span><span>本地按 Holland 系公式计算，非外部数据</span><span class="mid">公式计算，量级经标定</span></div>
+    <div class="dt-row"><span>天文潮</span><span>四个分潮的振幅与迟角常量表</span><span class="mid">示意值</span></div>
+    <div class="dt-row"><span>村庄</span><span>15 个真实地名，坐标吸附至 DEM 陆地格；人口与户数为示意</span><span class="mid">半实测</span></div>
+    <div class="dt-row"><span>适用范围</span><span>情景比较、机理教学、内核移植验证</span><span class="mid">不用于业务预报与防汛调度</span></div>
   </div>
 </section>
 
@@ -266,21 +312,21 @@
   <div class="foot-main">
     <div class="foot-brand">
       <span class="brand-txt">POSSIM<em>·Web</em></span>
-      <p>珠江口风暴潮淹没推演平台 · 浏览器演示移植版</p>
+      <p>珠江口风暴潮淹没推演平台 · 浏览器端实现</p>
       <p class="foot-by">Built by <a href="https://github.com/ccccty" target="_blank" rel="noopener">张秋雨</a> · 2026</p>
     </div>
     <div class="foot-links">
       <div>
         <h4>演示</h4>
-        <a href="app.html">打开大屏</a>
+        <a href="app.html">进入推演系统</a>
         <a href="app.html?tid=saola">苏拉 · 2023</a>
         <a href="app.html?tid=hato">天鸽 · 2017</a>
       </div>
       <div>
-        <h4>对比</h4>
+        <h4>对照</h4>
         <a href="app.html?kernel=fortran">原 Fortran 内核</a>
-        <a href="app.html?amp=1.0">1.0 物理档</a>
-        <a href="app.html?frame=20">直接到峰值帧</a>
+        <a href="app.html?amp=1.0">增幅档 1.0</a>
+        <a href="app.html?frame=20">直达峰值帧</a>
       </div>
       <div>
         <h4>仓库</h4>
@@ -289,8 +335,8 @@
     </div>
   </div>
   <p class="foot-note">
-    台风与灾情为历史/示意情景，不用于实际防汛决策。数据来源与边界见
-    <a href="#data">第 06 节</a>。
+    台风与灾情为历史量级重放情景。数据来源与适用范围见
+    <a href="#data">第 07 节</a>。
   </p>
 </footer>
 

@@ -166,8 +166,8 @@
     hato: { name: '天鸽', en: 'HATO', year: 2017 }
   };
   var AMP_HINT = {
-    '3.8': '对齐原厂在粗网格上的经验放大，观感接近 POSSIM 桌面版',
-    '1.0': '不放大，纯物理档：增水更保守，淹没面积落到千公顷量级'
+    '3.8': '与原 POSSIM 在粗网格上的经验增幅一致',
+    '1.0': '不作增幅，按计算值直接输出'
   };
 
   var MANIFEST = null;
@@ -201,13 +201,13 @@
             '</div>' +
             '<div class="case-metrics">' +
               '<div class="case-metric"><span>峰值增水</span><b>' + num(p.surge_m, 2) + '<em>m</em></b></div>' +
-              '<div class="case-metric hi"><span>最大淹没</span><b>' + num(p.area_ha, 0) + '<em>ha</em></b></div>' +
+              '<div class="case-metric hi"><span>淹没面积</span><b>' + num(p.area_ha, 0) + '<em>ha</em></b></div>' +
               '<div class="case-metric"><span>最大水深</span><b>' + num(p.depth_m, 2) + '<em>m</em></b></div>' +
-              '<div class="case-metric"><span>影响行政村</span><b>' + num(p.villages, 0) + '<em>个</em></b></div>' +
+              '<div class="case-metric"><span>受影响村庄</span><b>' + num(p.villages, 0) + '<em>个</em></b></div>' +
             '</div>' +
             '<div class="case-bar"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
-            '<div class="case-sub">峰值出现在 <b>' + (p.area_at || '--') + '</b> · 影响人口 <b>' + num(p.pop, 0) + '</b> 人</div>' +
-            '<a class="case-go" href="app.html?tid=' + c.tid + '&#38;amp=' + amp + '">进入这一场' +
+            '<div class="case-sub">峰值时刻 <b>' + (p.area_at || '--') + '</b> · 影响人口 <b>' + num(p.pop, 0) + '</b> 人（示意）</div>' +
+            '<a class="case-go" href="app.html?tid=' + c.tid + '&#38;amp=' + amp + '">查看该场推演' +
               '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>' +
             '</a>' +
           '</div>' +
@@ -255,13 +255,13 @@
       var av = aR[1] - (aR[1] - aR[0]) * (t / ticks);
       s += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) +
         '" stroke="rgba(23,69,107,.55)" stroke-width="1" stroke-dasharray="3 4"/>';
-      s += '<text x="' + (padL - 9) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#6f9ab5">' + sv.toFixed(1) + '</text>';
-      s += '<text x="' + (W - padR + 9) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="start" font-size="10" fill="#8a6f3f">' +
-        Math.round(av / 1000) + 'k</text>';
+      s += '<text x="' + (padL - 9) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end" font-size="14.5" fill="#8fb4cd">' + sv.toFixed(1) + '</text>';
+      s += '<text x="' + (W - padR + 9) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="start" font-size="14.5" fill="#c99a4e">' +
+        (av / 1000).toFixed(1) + 'k</text>';
     }
     // 轴标题
-    s += '<text x="' + padL + '" y="' + 14 + '" font-size="10.5" fill="#35e0ff" letter-spacing=".5">增水 m</text>';
-    s += '<text x="' + (W - padR) + '" y="' + 14 + '" text-anchor="end" font-size="10.5" fill="#ffb020" letter-spacing=".5">面积 ha</text>';
+    s += '<text x="' + padL + '" y="' + 14 + '" font-size="14.5" fill="#4fe6ff" letter-spacing=".5">增水 m</text>';
+    s += '<text x="' + (W - padR) + '" y="' + 14 + '" text-anchor="end" font-size="14.5" fill="#ffc247" letter-spacing=".5">面积 ha</text>';
 
     // 面积（面积填充 + 线）
     var aPts = rows.map(function (r, i) { return X(i).toFixed(1) + ',' + Ya(r.area_ha || 0).toFixed(1); }).join(' ');
@@ -283,10 +283,10 @@
       var x = X(i);
       s += '<circle cx="' + x.toFixed(1) + '" cy="' + Ys(r.surge_m || 0).toFixed(1) + '" r="3.4" fill="#04101f" stroke="#35e0ff" stroke-width="2"/>';
       s += '<circle cx="' + x.toFixed(1) + '" cy="' + Ya(r.area_ha || 0).toFixed(1) + '" r="2.6" fill="#ffb020" opacity=".95"/>';
-      s += '<text x="' + x.toFixed(1) + '" y="' + (padT + ih + 18) + '" text-anchor="middle" font-size="10.5" fill="#6f9ab5">' + r.vmax_kt + '</text>';
+      s += '<text x="' + x.toFixed(1) + '" y="' + (padT + ih + 18) + '" text-anchor="middle" font-size="14.5" fill="#8fb4cd">' + r.vmax_kt + '</text>';
       s += '<title>Vmax ' + r.vmax_kt + ' kt → 增水 ' + (r.surge_m || 0).toFixed(2) + ' m，淹没 ' + Math.round(r.area_ha || 0) + ' ha</title>';
     });
-    s += '<text x="' + (padL + iw / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10.5" fill="#5e88a8" letter-spacing=".4">覆盖整条路径的最大风速 Vmax（kt）</text>';
+    s += '<text x="' + (padL + iw / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="14" fill="#7ba7c9" letter-spacing=".4">覆盖整条路径的最大风速 Vmax（kt）</text>';
 
     svg.innerHTML = s;
   }

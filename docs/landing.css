@@ -505,3 +505,12 @@ b{color:var(--text-hi);font-weight:600;}
 .foot-by{margin-top:10px;font-size:12px;color:rgba(123,167,201,.85);}
 .foot-by a{color:rgba(53,224,255,.85);border-bottom:1px dotted rgba(53,224,255,.45);}
 .foot-by a:hover{color:var(--c-main);}
+
+/* 首屏导语里的加粗词组不折行（避免「36 小 / 时」这类断行） */
+.lede b{white-space:nowrap;}
+
+/* 导航 CTA 不换行（窄屏下「→」曾被挤到第二行） */
+.nav-cta{white-space:nowrap;}
+@media (max-width:640px){
+  .nav-cta{height:32px;padding:0 12px;font-size:12.5px;}
+}

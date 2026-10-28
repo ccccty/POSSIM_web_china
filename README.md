@@ -18,15 +18,15 @@
 
 ## 这是什么
 
-原软件 **POSSIM 3.0** 是一套 Windows 桌面风暴潮淹没推演工具：WPF 外壳 + 编译好的 Fortran 物理内核（`storm_surge_physics.dll`），结果只能导出 GeoTIFF 和一张静态网页，交互几乎为零，也没法演示。
+原软件 **POSSIM 3.0** 为 Windows 桌面风暴潮淹没推演工具，由 WPF 界面与编译后的 Fortran 物理内核（`storm_surge_physics.dll`）组成，输出为 GeoTIFF 与一张静态网页。
 
-本项目做了三件事：
+本工程完成三项工作：
 
-1. **把物理内核从 GUI 里拆出来。** 那个 DLL 是 x64 + gfortran 静态链接的独立二进制，不需要 .NET、不需要 WPF —— 按原 C# 里的 `DllImport` 签名用 `ctypes` 直接驱动就能跑，一帧 0.69 s，8 线程 37 帧 7 秒。
-2. **重写了一套等价的 numpy 计算链**（Holland 风场 → 反气压 → 风增水 → 波增水 → 四分潮 → 淹没判定），让整个推演可以跨平台、可读、可调参。
-3. **做了一套浏览器大屏**：1188×864 逐像素栅格叠到 Leaflet 底图上，时间轴逐小时演进，左侧行政村按当前帧水深实时重排，右侧是潮位—增水—总水位过程线；参数抽屉可以改 Vmax / 气压 / 潮汐后重算。
+1. **分离物理内核与界面。** 该 DLL 为 x64、gfortran 静态链接的独立二进制，不依赖 .NET 与 WPF；按原 C# 中的 `DllImport` 签名以 `ctypes` 调用即可运行，单帧 0.69 s，8 线程下 37 帧约 5–7 s。
+2. **实现等价的 numpy 计算链**（Holland 风场 → 反气压 → 风增水 → 波增水 → 四分潮 → 淹没判定），使推演可跨平台运行、参数可调、过程可读。
+3. **构建浏览器端演示系统**：1188×864 栅格叠合 Leaflet 底图，按小时逐帧演进；左栏为台风要素与受影响行政村（按当帧水深排序），右栏为潮位、增水与总水位过程线；参数面板支持 Vmax、中心气压与潮汐参数的重新计算。
 
-> 所有数字都可以在[在线演示](https://ccccty.github.io/POSSIM_web_china/app.html)里点到对应时刻核对。线上是 12 组工况的预计算帧（所以能零后端托管），本地起 `server.py` 则是任意参数实时重算。
+> 线上版本为 12 组工况的预计算静态包，逐帧结果可在[演示系统](https://ccccty.github.io/POSSIM_web_china/app.html)的时间轴上核对；本地运行 `server.py` 可对任意参数实时计算。
 
 ### 与原软件对照
 
@@ -140,7 +140,7 @@ Holland 梯度风 V(r)  ──  四象限风圈不对称展开
 | 峰值增水 | 1.664 m | **1.178 m** |
 | 峰值淹没面积 | 20,846 ha | **14,758 ha** |
 | 最大淹没深度 | 1.835 m | 1.466 m |
-| 37 帧耗时 | 4.2 s | 5.2 s（8 线程） |
+| 37 帧耗时 | 4.0–4.5 s | 5–7 s（8 线程） |
 | 1.0 物理档的峰值增水 | 0.438 m | 0.310 m |
 
 差 1.4 倍，但**不是常数偏差**。把台风压在网格中心，numpy 反而比内核低 30%；台风在 119 km 外，numpy 反而高 59%。原因是径向衰减形状不同 —— 原厂风增水是 **一次项** `0.0291572·W`（与水深、风区无关），numpy 版按风应力平方走 **二次项**。
@@ -153,7 +153,7 @@ Holland 梯度风 V(r)  ──  四象限风圈不对称展开
 拖曳系数 分段线性：1.475e-3 @9.5 → 1.35e-3 → 2.6125e-3 @32.5 → 1.8e-3 封底
 ```
 
-> **口径提醒**：比较两套内核要比**增水**，不要比**淹没面积**。珠江口围田高程多在 0–1 m，总水位差 10 cm 就能让面积跳几千公顷 —— 面积在这个地形上不是精度证据。
+> **指标选择**：两套内核之间宜比较**增水**。研究区围田高程多在 0–1 m，总水位变化 0.1 m 即可引起淹没面积大幅变化，面积指标不宜作为精度判据。
 
 ---
 
@@ -161,7 +161,7 @@ Holland 梯度风 V(r)  ──  四象限风圈不对称展开
 
 ```
 ┌──────────────────────────── 浏览器 ────────────────────────────┐
-│  index.html  项目介绍页（本次新增，响应式）                       │
+│  index.html  项目介绍页（响应式，静态内容）                       │
 │  app.html    大屏：Leaflet + ECharts + Canvas 风场 + 原生 JS      │
 │      ├─ js/api.js      网络层（live / static / mock 三态）        │
 │      ├─ js/static.js   静态数据包适配（GitHub Pages 用）          │
@@ -211,7 +211,7 @@ POSSIM_web_china/
 | 天文潮 | M2 / S2 / K1 / O1 四个分潮常量 | 示意值，非调和常数库 |
 | 村庄 | 15 个真实地名，坐标吸附到 DEM 陆地格 | 地名真，人口户数为示意 |
 
-**边界说清楚**：这是情景演示，不是水动力模型。没有接 ECMWF/GFS 预报场，没有求解潮波方程，潮位在整个 1188×864 网格上共用一个标量。它擅长演示「一场台风会把多少平方公里推上水面」「两套内核的差在哪」，**不适合防汛调度与决策**。
+**适用范围**：本工程用于情景比较、机理教学与内核移植验证。计算未求解潮波方程，未接入 ECMWF/GFS 预报场，潮位在 1188×864 网格上取单一标量；输出不作为业务预报或防汛调度依据。
 
 台风峰值强度按「让演示更明显」手工对齐过（例如山竹写作 928 hPa / 108 kt，比登陆时实测强一档）。
 
@@ -233,11 +233,11 @@ POSSIM_web_china/
 
 ## English
 
-**POSSIM-Web** is a browser port of a Windows-only storm-surge inundation tool. The original ships as a WPF shell around a compiled Fortran physics DLL. The DLL turns out to be a self-contained x64 binary, so it is driven directly from Python via `ctypes` — no .NET, no GUI. A parallel NumPy implementation reproduces the same chain (Holland wind field → inverse barometer → wind setup → wave setup → four-constituent tide → inundation) and both kernels can be compared frame by frame.
+**POSSIM-Web** is a browser implementation of a Windows-only storm-surge inundation tool. The original consists of a WPF shell and a compiled Fortran physics DLL. The DLL is a self-contained x64 binary, so it is invoked directly from Python via `ctypes`, without .NET or any GUI. A parallel NumPy implementation reproduces the same chain (Holland wind field → inverse barometer → wind setup → wave setup → four-constituent tide → inundation), allowing the two kernels to be compared frame by frame.
 
 The front end is a dependency-free dashboard (vanilla JS + Leaflet + ECharts) rendering a 1188×864 gridded surge field over the Pearl River Estuary, 36 simulated hours at 1-hour steps. Twelve scenario combinations (3 historical typhoons × 2 kernels × 2 amplification tiers) are precomputed and shipped as static files, so the live demo runs on GitHub Pages with no backend. Run `python server.py` locally to recompute with arbitrary parameters.
 
-> Scenario demo only — not a hydrodynamic model, not for operational flood forecasting.
+> **Scope.** Intended for scenario comparison, teaching and kernel-porting validation. The tide is a single scalar over the whole grid; no wave-equation solver and no ECMWF/GFS forcing are used. Output is not intended for operational forecasting or flood-control decisions.
 
 ---
 
