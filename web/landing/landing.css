@@ -501,3 +501,7 @@ b{color:var(--text-hi);font-weight:600;}
   }
   .eyebrow i{display:none;}
 }
+
+.foot-by{margin-top:10px;font-size:12px;color:rgba(123,167,201,.85);}
+.foot-by a{color:rgba(53,224,255,.85);border-bottom:1px dotted rgba(53,224,255,.45);}
+.foot-by a:hover{color:var(--c-main);}

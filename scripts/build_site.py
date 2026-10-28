@@ -264,6 +264,10 @@ def build_app_html(out: Path) -> None:
                   '<meta name="theme-color" content="#04101f">\n'
                   '<meta name="description" content="POSSIM-Web：珠江口风暴潮淹没推演大屏'
                   '（1188×864 栅格、36 小时、37 帧、原 Fortran 内核直连）。静态演示版。">\n'
+                  '<meta property="og:type" content="website">\n'
+                  '<meta property="og:title" content="珠江口风暴潮淹没推演平台 · POSSIM-Web">\n'
+                  '<meta property="og:image" content="assets/hero-shot.webp">\n'
+                  '<meta name="twitter:card" content="summary_large_image">\n'
                   '<link rel="icon" href="data:image/svg+xml,'
                   '%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 32 32\'%3E'
                   '%3Crect width=\'32\' height=\'32\' rx=\'7\' fill=\'%23061a2e\'/%3E'
@@ -305,11 +309,21 @@ def main() -> int:
     ap.add_argument("--skip-fortran", action="store_true")
     ap.add_argument("--skip-sweep", action="store_true")
     ap.add_argument("--shots", default="", help="验收截图源目录（默认 ../03-截图）")
+    ap.add_argument("--html-only", action="store_true",
+                    help="只重生成 html/资源，不动已算好的帧数据（改前端时用，秒级）")
     args = ap.parse_args()
 
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     log("== 输出目录 %s" % out)
+
+    if args.html_only:
+        log("· --html-only：跳过推演，仅重生成 HTML 与静态资源")
+        copy_assets(out)
+        build_app_html(out)
+        build_landing(out)
+        log("== 完成（html-only）")
+        return 0
 
     typhoons = [t for t in TYPHOONS if not args.only or t[0] == args.only]
     kernels = [k for k in KERNELS if not (args.skip_fortran and k[0] == "fortran")]
