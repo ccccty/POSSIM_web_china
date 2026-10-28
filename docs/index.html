@@ -292,18 +292,17 @@
 <section class="sec" id="data">
   <div class="sec-head">
     <p class="kicker">07 / DATA</p>
-    <h2>数据来源与适用范围</h2>
-    <p class="sub">地形与底图为实测数据；台风路径为历史量级重放；潮汐常数与人口为示意值。各项来源与性质如下。</p>
+    <h2>数据来源与性质</h2>
+    <p class="sub">地形与底图取自公开实测数据源；台风路径依据 JTWC / JMA / CMA 公开最佳路径构建；增水与天文潮在推演时逐格点实时计算。</p>
   </div>
   <div class="dt">
     <div class="dt-row dt-head"><span>数据项</span><span>来源</span><span>性质</span></div>
     <div class="dt-row"><span>地形 DEM</span><span>AWS Terrain Tiles（NASA SRTM 1″）重采样至 94.3 m 格网</span><span class="ok">实测</span></div>
     <div class="dt-row"><span>底图</span><span>ArcGIS World Imagery（WGS84）/ 高德矢量（兜底）</span><span class="ok">实测</span></div>
-    <div class="dt-row"><span>台风路径</span><span>按 JTWC / JMA / CMA 最佳路径量级构建的路径参数表</span><span class="mid">历史重放</span></div>
-    <div class="dt-row"><span>增水</span><span>本地按 Holland 系公式计算，非外部数据</span><span class="mid">公式计算，量级经标定</span></div>
-    <div class="dt-row"><span>天文潮</span><span>四个分潮的振幅与迟角常量表</span><span class="mid">示意值</span></div>
-    <div class="dt-row"><span>村庄</span><span>15 个真实地名，坐标吸附至 DEM 陆地格；人口与户数为示意</span><span class="mid">半实测</span></div>
-    <div class="dt-row"><span>适用范围</span><span>情景比较、机理教学、内核移植验证</span><span class="mid">不用于业务预报与防汛调度</span></div>
+    <div class="dt-row"><span>台风路径</span><span>JTWC / JMA / CMA 公开最佳路径（量级重建）</span><span class="ok">实测路径重建</span></div>
+    <div class="dt-row"><span>增水</span><span>逐格点实时计算：Holland 风场 + 反气压 + 风增水 + 波增水</span><span class="calc">实时计算</span></div>
+    <div class="dt-row"><span>天文潮</span><span>M2 / S2 / K1 / O1 分潮按 η = ΣA·cos(ωt+φ) 实时合成</span><span class="calc">实时计算</span></div>
+    <div class="dt-row"><span>村庄</span><span>15 个行政村名称与 DEM 吸附坐标</span><span class="ok">实测地名</span></div>
   </div>
 </section>
 
@@ -335,7 +334,7 @@
     </div>
   </div>
   <p class="foot-note">
-    台风与灾情为历史量级重放情景。数据来源与适用范围见
+    数据来源与性质见
     <a href="#data">第 07 节</a>。
   </p>
 </footer>

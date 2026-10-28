@@ -514,3 +514,6 @@ b{color:var(--text-hi);font-weight:600;}
 @media (max-width:640px){
   .nav-cta{height:32px;padding:0 12px;font-size:12.5px;}
 }
+
+/* 数据表中「实时计算」用青色，与「实测」的绿色区分 */
+.dt-row .calc{color:var(--c-main);}
